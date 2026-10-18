@@ -134,7 +134,7 @@
             <h2 class="section-title">New arrivals</h2>
             <a href="/products?sort=newest" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
         </div>
-        <div class="grid">
+        <div class="grid grid-even">
             @foreach (var p in Model.InStock)
             {
                 <partial name="_ProductCard" model="p" />

@@ -111,6 +111,7 @@
             else localStorage.setItem("pref-" + name, value);
         } catch (e) { /* not saved, still applied for this page */ }
         syncHeaderHeight();
+        evenRows();
     }
     document.querySelectorAll("input[data-pref]").forEach(function (input) {
         input.checked = readPref(input.dataset.pref) === input.value;
@@ -119,6 +120,27 @@
         var input = e.target;
         if (input.dataset && input.dataset.pref && input.checked) applyPref(input.dataset.pref, input.value);
     });
+
+    // Home grids: show whole rows only (at most two, three on phones), whatever the column count.
+    function evenRows() {
+        document.querySelectorAll(".grid-even").forEach(function (grid) {
+            var items = Array.prototype.slice.call(grid.children);
+            items.forEach(function (el) { el.hidden = false; });
+            var cols = getComputedStyle(grid).gridTemplateColumns.split(" ").length;
+            var limit = Math.min(items.length, cols * (cols <= 2 ? 3 : 2));
+            if (limit >= cols) limit -= limit % cols;
+            items.forEach(function (el, i) { el.hidden = i >= limit; });
+        });
+        // Rails with fewer cards than columns widen their cards to fill the row.
+        document.querySelectorAll(".rail").forEach(function (rail) {
+            rail.style.removeProperty("--rail-cols");
+            var cols = parseFloat(getComputedStyle(rail).getPropertyValue("--rail-cols")) || 1;
+            if (rail.children.length < cols) rail.style.setProperty("--rail-cols", String(rail.children.length));
+        });
+    }
+    evenRows();
+    var resizeTimer;
+    window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(evenRows, 120); });
 
     // Live countdown for time-limited offers (re-queried each tick, so swapped-in content is covered too).
     function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
