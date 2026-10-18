@@ -2,33 +2,84 @@
 @{
     ViewData["Title"] = "";
     ViewData["Description"] = $"{Fmt.Shop.Name}: mechanical keyboards, mice and accessories in Bangladesh with detailed specifications and cash on delivery.";
+
+    static string IconFor(string slug) =>
+        slug.Contains("keyboard") ? "keyboard"
+        : slug.Contains("mice") || slug.Contains("mouse") ? "mouse"
+        : slug.Contains("pad") ? "pad"
+        : slug.Contains("switch") || slug.Contains("keycap") ? "keycap"
+        : "grid";
+
+    // Hero illustration: a 75% keyboard drawn as key rows (widths in key units).
+    double[][] rows =
+    [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5],
+        [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1.75, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.75],
+        [2.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.75, 1.5],
+        [1.25, 1.25, 1.25, 6.25, 1.5, 1, 1, 1],
+    ];
+    const double unit = 34, gap = 5, padding = 16;
 }
 
 <section class="hero">
     <div class="hero-text">
-        <p class="eyebrow">Genuine gadgets · Honest prices · All over Bangladesh</p>
-        <h1>Find your perfect keyboard and mouse.</h1>
-        <p class="lead">Filter by what matters to you — switch type, layout, wireless, DPI, weight — and order from stock, or pre-order at a special price.</p>
+        <p class="eyebrow"><partial name="_Icon" model='"bolt"' /> Fresh stock every week</p>
+        <h1>Type faster.<br />Aim sharper.</h1>
+        <p class="lead">Mechanical keyboards, gaming mice and desk gear — compare every switch, layout and sensor, then pay cash on delivery anywhere in Bangladesh.</p>
         <div class="hero-actions">
-            <a class="btn btn-primary" href="/products">Browse all products</a>
-            <a class="btn btn-ghost" href="/products?avail=pre-order">See pre-order deals</a>
+            <a class="btn btn-dark btn-lg" href="/products">Shop all products</a>
+            <a class="btn btn-ghost btn-lg" href="/products?avail=pre-order">Pre-order deals</a>
         </div>
     </div>
-    <ul class="hero-points">
-        <li><partial name="_Icon" model='"check"' /><div><strong>In-stock items</strong><span>Inside Dhaka 1–2 days, outside Dhaka 2–4 days</span></div></li>
-        <li><partial name="_Icon" model='"clock"' /><div><strong>Pre-order deals</strong><span>Lower prices for a limited time</span></div></li>
-        <li><partial name="_Icon" model='"shield"' /><div><strong>Cash on delivery</strong><span>Check your product, then pay</span></div></li>
-    </ul>
+    <div class="hero-art" aria-hidden="true">
+        <svg class="kb" viewBox="0 0 593 222">
+            <rect class="kb-body" x="0" y="0" width="593" height="222" rx="22" />
+            @{
+                var y = padding;
+                var r = 0;
+            }
+            @foreach (var row in rows)
+            {
+                var x = padding;
+                var k = 0;
+                foreach (var w in row)
+                {
+                    var width = w * unit + (w - 1) * gap;
+                    var cls = (r == 0 && k == 0) || (r == 2 && k == row.Length - 1) ? "kb-key kb-accent" : r == 4 && k == 3 ? "kb-key kb-space" : "kb-key";
+                    <rect class="@cls" x="@x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)" y="@y" width="@width.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)" height="@unit" rx="6" />
+                    x += width + gap;
+                    k++;
+                }
+                y += unit + gap;
+                r++;
+            }
+        </svg>
+        <svg class="mouse-art" viewBox="0 0 90 140">
+            <rect class="kb-body" x="2" y="2" width="86" height="136" rx="43" />
+            <path class="kb-line" d="M45 2v46M2 48h86" />
+            <rect class="kb-accent" x="40" y="16" width="10" height="20" rx="5" />
+        </svg>
+    </div>
 </section>
+
+<ul class="trust">
+    <li><partial name="_Icon" model='"truck"' /><div><strong>Fast delivery</strong><span>Inside Dhaka 1–2 days, outside 2–4 days</span></div></li>
+    <li><partial name="_Icon" model='"shield"' /><div><strong>Cash on delivery</strong><span>Check your product, then pay</span></div></li>
+    <li><partial name="_Icon" model='"clock"' /><div><strong>Pre-order deals</strong><span>Lower prices for a limited time</span></div></li>
+</ul>
 
 @if (Model.Categories.Count > 0)
 {
     <section class="section">
-        <h2 class="section-title">Shop by category</h2>
+        <div class="section-head">
+            <h2 class="section-title">Shop by category</h2>
+        </div>
         <div class="category-tiles">
             @foreach (var c in Model.Categories)
             {
                 <a class="category-tile" href="/c/@c.Slug">
+                    <span class="category-icon"><partial name="_Icon" model="IconFor(c.Slug)" /></span>
                     <strong>@c.Name</strong>
                     @if (c.Children.Count > 0)
                     {
@@ -40,30 +91,14 @@
     </section>
 }
 
-@if (Model.PreOrderDeals.Count > 0)
-{
-    <section class="section">
-        <div class="section-head">
-            <h2 class="section-title">Pre-order deals <span class="pill pill-pre">Limited time</span></h2>
-            <a href="/products?avail=pre-order" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
-        </div>
-        <div class="grid">
-            @foreach (var p in Model.PreOrderDeals)
-            {
-                <partial name="_ProductCard" model="p" />
-            }
-        </div>
-    </section>
-}
-
 @if (Model.Featured.Count > 0)
 {
     <section class="section">
         <div class="section-head">
-            <h2 class="section-title">In stock now</h2>
-            <a href="/products?avail=in-stock" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
+            <h2 class="section-title">Featured</h2>
+            <a href="/products" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
         </div>
-        <div class="grid">
+        <div class="rail">
             @foreach (var p in Model.Featured)
             {
                 <partial name="_ProductCard" model="p" />
@@ -72,7 +107,43 @@
     </section>
 }
 
-@if (Model.Featured.Count == 0 && Model.PreOrderDeals.Count == 0)
+@if (Model.PreOrderDeals.Count > 0)
+{
+    <section class="section deals">
+        <div class="deals-head">
+            <div>
+                <p class="eyebrow eyebrow-light"><partial name="_Icon" model='"clock"' /> Limited time</p>
+                <h2>Pre-order deals</h2>
+                <p>Order inside the offer window and get the lower price. Delivered in about two weeks.</p>
+            </div>
+            <a href="/products?avail=pre-order" class="btn btn-light">See all deals</a>
+        </div>
+        <div class="rail">
+            @foreach (var p in Model.PreOrderDeals)
+            {
+                <partial name="_ProductCard" model="p" />
+            }
+        </div>
+    </section>
+}
+
+@if (Model.InStock.Count > 0)
+{
+    <section class="section">
+        <div class="section-head">
+            <h2 class="section-title">New arrivals</h2>
+            <a href="/products?sort=newest" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
+        </div>
+        <div class="grid">
+            @foreach (var p in Model.InStock)
+            {
+                <partial name="_ProductCard" model="p" />
+            }
+        </div>
+    </section>
+}
+
+@if (Model.Featured.Count == 0 && Model.InStock.Count == 0 && Model.PreOrderDeals.Count == 0)
 {
     <div class="empty">
         <h2>No products yet</h2>

@@ -36,6 +36,8 @@ public class Product
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }
     public bool IsPublished { get; set; }
+    /// <summary>Shown in the "Featured" section of the home page and first in listings.</summary>
+    public bool IsFeatured { get; set; }
 
     public int? CategoryId { get; set; }
     public Category? Category { get; set; }

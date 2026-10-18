@@ -11,6 +11,7 @@ public sealed class HomeViewModel
 {
     public required IReadOnlyList<CategoryLink> Categories { get; init; }
     public required IReadOnlyList<ProductCard> Featured { get; init; }
+    public required IReadOnlyList<ProductCard> InStock { get; init; }
     public required IReadOnlyList<ProductCard> PreOrderDeals { get; init; }
     public required IReadOnlyList<ProductCard> Newest { get; init; }
 }

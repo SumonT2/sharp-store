@@ -44,7 +44,12 @@ public sealed record ProductCard(
     Availability Availability,
     int? LeadTimeDays,
     DateTime? OfferEndsAt,
-    IReadOnlyList<string> Highlights);
+    IReadOnlyList<string> Highlights)
+{
+    public string? ShortDescription { get; init; }
+    public bool IsFeatured { get; init; }
+    public bool CanBuy { get; init; }
+}
 
 public sealed record CatalogResult(
     Category? Category,
@@ -165,9 +170,12 @@ public class CatalogQueryService(ShopDbContext db)
         Availability? availability = null,
         int? categoryId = null,
         int? excludeProductId = null,
+        bool featuredOnly = false,
         CancellationToken ct = default)
     {
         var q = db.Products.AsNoTracking().Where(p => p.IsPublished && p.Price != null);
+        if (featuredOnly)
+            q = q.Where(p => p.IsFeatured);
         if (availability is { } a)
             q = q.Where(p => p.Availability == a);
         else
@@ -188,9 +196,9 @@ public class CatalogQueryService(ShopDbContext db)
         var rows = await q
             .Select(p => new
             {
-                p.Id, p.Name, p.Slug, p.Sku,
+                p.Id, p.Name, p.Slug, p.Sku, p.ShortDescription, p.IsFeatured,
                 Brand = p.Brand != null ? p.Brand.Name : null,
-                p.ImageUrl, p.Price, p.CompareAtPrice, p.Availability, p.LeadTimeDays, p.OfferEndsAt,
+                p.ImageUrl, p.Price, p.CompareAtPrice, p.Availability, p.LeadTimeDays, p.OfferEndsAt, p.StockQuantity, p.IsPublished,
                 Highlights = p.Specifications
                     .Where(s => s.Attribute!.ShowOnCard)
                     .OrderBy(s => s.Attribute!.DisplayOrder)
@@ -201,7 +209,12 @@ public class CatalogQueryService(ShopDbContext db)
 
         return rows.Select(r => new ProductCard(
             r.Id, r.Name, r.Slug, r.Sku, r.Brand, r.ImageUrl, r.Price, r.CompareAtPrice, r.Availability, r.LeadTimeDays, r.OfferEndsAt,
-            r.Highlights.Select(h => string.IsNullOrEmpty(h.Unit) ? h.Value : $"{h.Value} {h.Unit}").ToList())).ToList();
+            r.Highlights.Select(h => string.IsNullOrEmpty(h.Unit) ? h.Value : $"{h.Value} {h.Unit}").ToList())
+        {
+            ShortDescription = r.ShortDescription,
+            IsFeatured = r.IsFeatured,
+            CanBuy = r.IsPublished && r.Price > 0 && r.Availability != Availability.OutOfStock && r.StockQuantity is null or > 0,
+        }).ToList();
     }
 
     public static IEnumerable<string> SearchTerms(string? search) =>
@@ -215,8 +228,9 @@ public class CatalogQueryService(ShopDbContext db)
         CatalogSort.PriceHighLow => q.OrderBy(p => p.Price == null).ThenByDescending(p => p.Price).ThenBy(p => p.Id),
         CatalogSort.Newest => q.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
         CatalogSort.NameAz => q.OrderBy(p => p.Name).ThenBy(p => p.Id),
-        // Featured: things you can buy first (in stock, then pre-order), newest first within each group.
+        // Featured: things you can buy first (in stock, then pre-order), featured products first within each group.
         _ => q.OrderBy(p => p.Availability == Availability.InStock ? 0 : p.Availability == Availability.PreOrder ? 1 : 2)
+              .ThenByDescending(p => p.IsFeatured)
               .ThenByDescending(p => p.CreatedAt)
               .ThenByDescending(p => p.Id),
     };

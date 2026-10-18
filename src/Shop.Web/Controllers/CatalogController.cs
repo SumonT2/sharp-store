@@ -19,7 +19,7 @@ public class CatalogController(CatalogQueryService catalog, ShopDbContext db, IO
         var result = await catalog.SearchAsync(url.ToQuery(slug), ct);
         if (result.Category is null)
             return NotFound();
-        return View("Listing", new ListingViewModel { Title = result.Category.Name, Result = result, Url = url });
+        return Listing(new ListingViewModel { Title = result.Category.Name, Result = result, Url = url });
     }
 
     [HttpGet("/products")]
@@ -27,7 +27,7 @@ public class CatalogController(CatalogQueryService catalog, ShopDbContext db, IO
     {
         var url = ListingUrl.FromRequest(Request);
         var result = await catalog.SearchAsync(url.ToQuery(null), ct);
-        return View("Listing", new ListingViewModel { Title = "All products", Result = result, Url = url });
+        return Listing(new ListingViewModel { Title = "All products", Result = result, Url = url });
     }
 
     [HttpGet("/search")]
@@ -36,7 +36,19 @@ public class CatalogController(CatalogQueryService catalog, ShopDbContext db, IO
         var url = ListingUrl.FromRequest(Request);
         var result = await catalog.SearchAsync(url.ToQuery(null), ct);
         var title = string.IsNullOrWhiteSpace(q) ? "Search" : $"Results for “{q.Trim()}”";
-        return View("Listing", new ListingViewModel { Title = title, Result = result, Url = url, Search = q });
+        return Listing(new ListingViewModel { Title = title, Result = result, Url = url, Search = q });
+    }
+
+    /// <summary>
+    /// Full page normally; just the listing body when the page's script asks for it, so filters can update
+    /// the products in place without reloading the page.
+    /// </summary>
+    private IActionResult Listing(ListingViewModel model)
+    {
+        Response.Headers.Vary = "X-Partial";
+        return Request.Headers["X-Partial"] == "listing"
+            ? PartialView("_ListingBody", model)
+            : View("Listing", model);
     }
 
     [HttpGet("/p/{slug}")]

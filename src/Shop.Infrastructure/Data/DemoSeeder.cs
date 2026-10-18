@@ -33,6 +33,8 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
         ("General > Warranty", false, true),
     ];
 
+    private static readonly HashSet<string> FeaturedSkus = ["KB-KV-K75W", "KB-KV-K68", "MS-CL-G3W", "MS-AR-M7", "KB-KV-K100", "MS-CL-G1"];
+
     private const string Keyboards = "Keyboards > Mechanical Keyboards";
     private const string GamingMice = "Mice > Gaming Mice";
     private const string WirelessMice = "Mice > Wireless Mice";
@@ -141,6 +143,7 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
                 Category = await writer.GetOrCreateCategoryPathAsync(d.Category, ct),
                 Brand = await writer.GetOrCreateBrandAsync(d.Brand, ct),
                 IsPublished = true,
+                IsFeatured = FeaturedSkus.Contains(d.Sku),
                 CreatedAt = now.AddMinutes(-index++),
                 UpdatedAt = now,
             };

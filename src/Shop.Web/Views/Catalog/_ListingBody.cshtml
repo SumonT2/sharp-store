@@ -1,0 +1,168 @@
+@model ListingViewModel
+@{
+    var r = Model.Result;
+    var url = Model.Url;
+    var currentSort = url.First("sort") ?? "featured";
+    const int pillSpecs = 3;
+
+    // Active filter chips: (label, link that removes it)
+    var chips = new List<(string Label, string Href)>();
+    foreach (var v in r.AvailabilityFacet.Values.Where(v => v.Selected)) chips.Add((v.Label, url.Toggle("avail", v.Value)));
+    foreach (var v in r.BrandFacet.Values.Where(v => v.Selected)) chips.Add((v.Label, url.Toggle("brand", v.Value)));
+    foreach (var f in r.SpecFacets)
+        foreach (var v in f.Values.Where(v => v.Selected)) chips.Add(($"{f.Name}: {v.Label}", url.Toggle(ListingUrl.SpecKey(f.Key), v.Value)));
+    var query = url.ToQuery(null);
+    var hasPrice = query.MinPrice is not null || query.MaxPrice is not null;
+    if (hasPrice)
+        chips.Add(($"{(query.MinPrice is { } mn ? Fmt.Money(mn) : "Any")} – {(query.MaxPrice is { } mx ? Fmt.Money(mx) : "any")}", url.Without("min", "max")));
+}
+
+<div class="listing-head">
+    <h1>@Model.Title</h1>
+    <p class="muted" data-listing-count>@r.Total product@(r.Total == 1 ? "" : "s")</p>
+</div>
+
+@if (r.Subcategories.Count > 0)
+{
+    <div class="subcategories">
+        @foreach (var c in r.Subcategories)
+        {
+            <a class="chip" href="/c/@c.Slug">@c.Name</a>
+        }
+    </div>
+}
+
+<div class="filter-bar">
+    <div class="filter-pills" role="group" aria-label="Filters">
+        <button type="button" class="pill pill-all @(chips.Count > 0 ? "is-active" : null)" data-toggle-filters aria-controls="filters" aria-expanded="false">
+            <partial name="_Icon" model='"sliders"' /> <span>All filters</span>
+            @if (chips.Count > 0)
+            {
+                <span class="pill-count">@chips.Count</span>
+            }
+        </button>
+        @if (r.AvailabilityFacet.Values.Count > 1 || r.AvailabilityFacet.Values.Any(v => v.Selected))
+        {
+            <partial name="_PillFacet" model='(r.AvailabilityFacet, url, "avail")' />
+        }
+        <details class="pill-menu" data-key="price" data-close-outside>
+            <summary class="pill @(hasPrice ? "is-active" : null)">Price <partial name="_Icon" model='"down"' /></summary>
+            <div class="pill-pop pill-pop-narrow">
+                <partial name="_PriceForm" model="(r, url)" view-data='new ViewDataDictionary(ViewData) { ["PriceFormId"] = "pill" }' />
+            </div>
+        </details>
+        @if (r.BrandFacet.Values.Count > 0)
+        {
+            <partial name="_PillFacet" model='(r.BrandFacet, url, "brand")' />
+        }
+        @foreach (var f in r.SpecFacets.Take(pillSpecs))
+        {
+            <partial name="_PillFacet" model="(f, url, ListingUrl.SpecKey(f.Key))" />
+        }
+    </div>
+    <form method="get" class="sort-form" data-ajax>
+        @foreach (var h in url.HiddenFields("sort"))
+        {
+            <input type="hidden" name="@h.Key" value="@h.Value" />
+        }
+        <label for="sort" class="sr-only">Sort by</label>
+        <div class="pill pill-select">
+            <span class="pill-select-label" aria-hidden="true">Sort:</span>
+            <select id="sort" name="sort" data-autosubmit>
+                @foreach (var (slug, label) in ListingUrl.SortOptions)
+                {
+                    <option value="@slug" selected="@(slug == currentSort)">@label</option>
+                }
+            </select>
+        </div>
+        <noscript><button class="btn btn-small" type="submit">Apply</button></noscript>
+    </form>
+</div>
+
+@if (chips.Count > 0)
+{
+    <div class="active-filters">
+        @foreach (var (label, href) in chips)
+        {
+            <a class="chip chip-active" href="@href" data-ajax aria-label="Remove filter @label">@label <partial name="_Icon" model='"x"' /></a>
+        }
+        <a class="link-btn" href="@url.ClearFilters()" data-ajax>Clear all</a>
+    </div>
+}
+
+<section class="results" aria-label="Products">
+    @if (r.Products.Count == 0)
+    {
+        <div class="empty">
+            <h2>No products match</h2>
+            <p>Try removing a filter@(url.HasFilters ? "" : " or searching for something else").</p>
+            @if (url.HasFilters)
+            {
+                <a class="btn btn-dark" href="@url.ClearFilters()" data-ajax>Clear filters</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="grid">
+            @foreach (var p in r.Products)
+            {
+                <partial name="_ProductCard" model="p" />
+            }
+        </div>
+    }
+
+    @if (r.PageCount > 1)
+    {
+        <nav class="pagination" aria-label="Pages">
+            @if (r.Page > 1)
+            {
+                <a href="@url.With("page", (r.Page - 1).ToString())" rel="prev" data-ajax="page">Previous</a>
+            }
+            @for (var i = Math.Max(1, r.Page - 2); i <= Math.Min(r.PageCount, r.Page + 2); i++)
+            {
+                if (i == r.Page)
+                {
+                    <span aria-current="page">@i</span>
+                }
+                else
+                {
+                    <a href="@url.With("page", i.ToString())" data-ajax="page">@i</a>
+                }
+            }
+            @if (r.Page < r.PageCount)
+            {
+                <a href="@url.With("page", (r.Page + 1).ToString())" rel="next" data-ajax="page">Next</a>
+            }
+        </nav>
+    }
+</section>
+
+<aside id="filters" class="drawer" aria-label="All filters" aria-hidden="true">
+    <div class="drawer-head">
+        <strong>All filters</strong>
+        <button type="button" class="icon-btn" data-toggle-filters aria-label="Close filters"><partial name="_Icon" model='"x"' /></button>
+    </div>
+    <div class="drawer-body">
+        @if (r.AvailabilityFacet.Values.Count > 0)
+        {
+            <partial name="_Facet" model='(r.AvailabilityFacet, url, "avail")' />
+        }
+        <details class="facet" open>
+            <summary>Price</summary>
+            <partial name="_PriceForm" model="(r, url)" view-data='new ViewDataDictionary(ViewData) { ["PriceFormId"] = "drawer" }' />
+        </details>
+        @if (r.BrandFacet.Values.Count > 0)
+        {
+            <partial name="_Facet" model='(r.BrandFacet, url, "brand")' />
+        }
+        @foreach (var f in r.SpecFacets)
+        {
+            <partial name="_Facet" model="(f, url, ListingUrl.SpecKey(f.Key))" />
+        }
+    </div>
+    <div class="drawer-foot">
+        <a class="btn btn-ghost" href="@url.ClearFilters()" data-ajax>Clear all</a>
+        <button type="button" class="btn btn-dark" data-toggle-filters>Show @r.Total result@(r.Total == 1 ? "" : "s")</button>
+    </div>
+</aside>

@@ -28,6 +28,7 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
         ["description"] = ["long_description"],
         ["image_url"] = ["image", "picture"],
         ["published"] = ["is_published", "visible"],
+        ["featured"] = ["is_featured"],
         ["price_override"] = ["fixed_price"],
         ["compare_at_price"] = ["old_price", "was_price", "regular_price"],
     };
@@ -177,6 +178,13 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
             if (TextUtil.ParseBool(published) is not { } flag)
                 return $"\"published\" must be yes/no, true/false or 1/0 (got \"{published}\").";
             product.IsPublished = flag;
+        }
+
+        if (row.Get("featured") is { } featured)
+        {
+            if (TextUtil.ParseBool(featured) is not { } flag)
+                return $"\"featured\" must be yes/no, true/false or 1/0 (got \"{featured}\").";
+            product.IsFeatured = flag;
         }
 
         if (!TryMoney(row.Get("price_override"), product.PriceOverride, out var overridePrice, out var err))

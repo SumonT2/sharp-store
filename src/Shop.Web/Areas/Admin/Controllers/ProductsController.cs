@@ -65,6 +65,7 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
             Description = product.Description,
             ImageUrl = product.ImageUrl,
             IsPublished = product.IsPublished,
+            IsFeatured = product.IsFeatured,
             PriceOverride = product.PriceOverride,
             CompareAtPrice = product.CompareAtPrice,
             SpecsText = string.Join('\n', product.Specifications
@@ -114,6 +115,7 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
         product.Description = Clean(input.Description);
         product.ImageUrl = Clean(input.ImageUrl);
         product.IsPublished = input.IsPublished;
+        product.IsFeatured = input.IsFeatured;
         product.PriceOverride = input.PriceOverride;
         product.CompareAtPrice = input.CompareAtPrice;
         product.UpdatedAt = clock.UtcNow;

@@ -5,32 +5,75 @@
     var cartCount = Cart.Count();
     var shopName = Fmt.Shop.Name;
     var title = ViewData["Title"] as string;
+    var path = Context.Request.Path.Value ?? "/";
+    var zones = Fmt.Shop.EffectiveDeliveryZones;
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@(string.IsNullOrEmpty(title) ? shopName : $"{title} · {shopName}")</title>
+    <title>@(string.IsNullOrEmpty(title) ? $"{shopName} — keyboards, mice & accessories" : $"{title} · {shopName}")</title>
     @if (ViewData["Description"] is string description)
     {
         <meta name="description" content="@description" />
     }
+    <meta name="theme-color" content="#16171b" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d4ed8'/%3E%3Cpath d='M9 12h14l-1.5 10h-11z' fill='white'/%3E%3C/svg%3E" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2316171b'/%3E%3Crect x='8' y='7' width='16' height='15' rx='3' fill='%233b5bfd'/%3E%3Crect x='6' y='20' width='20' height='5' rx='2' fill='%23fff'/%3E%3C/svg%3E" />
 </head>
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
+
+    <div class="announce">
+        <div class="container announce-row">
+            <span>Cash on delivery all over Bangladesh</span>
+            <span class="announce-extra">Delivery @string.Join(" · ", zones.Select(z => $"{z.Name} {Fmt.Money(z.Fee)}"))</span>
+            @if (Fmt.Shop.FreeShippingOver is { } free)
+            {
+                <span class="announce-extra">Free delivery over @Fmt.Money(free)</span>
+            }
+        </div>
+    </div>
+
     <header class="site-header">
         <div class="container header-row">
-            <a class="logo" href="/">
+            <a class="logo" href="/" aria-label="@shopName home">
                 <span class="logo-mark" aria-hidden="true"></span>
-                <span>@shopName</span>
+                <span class="logo-text">@shopName</span>
             </a>
+
+            <nav class="main-nav" aria-label="Main">
+                <details class="mega" data-close-outside>
+                    <summary>Shop <partial name="_Icon" model='"down"' /></summary>
+                    <div class="mega-panel">
+                        <a class="mega-all" href="/products"><partial name="_Icon" model='"grid"' /> All products</a>
+                        <div class="mega-cols">
+                            @foreach (var c in categories)
+                            {
+                                <div>
+                                    <a class="mega-head" href="/c/@c.Slug">@c.Name</a>
+                                    @foreach (var child in c.Children)
+                                    {
+                                        <a href="/c/@child.Slug">@child.Name</a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </details>
+                @foreach (var c in categories.Take(3))
+                {
+                    <a class="@(path.StartsWith("/c/" + c.Slug) ? "is-active" : null)" href="/c/@c.Slug">@c.Name</a>
+                }
+                <a class="nav-deal" href="/products?avail=pre-order">Deals</a>
+            </nav>
+
             <form class="search" action="/search" method="get" role="search">
-                <input type="search" name="q" placeholder="Search products, brands, SKUs…" aria-label="Search" value="@Context.Request.Query["q"]" />
+                <input type="search" name="q" placeholder="Search keyboards, mice…" aria-label="Search" value="@Context.Request.Query["q"]" />
                 <button type="submit" aria-label="Search"><partial name="_Icon" model='"search"' /></button>
             </form>
+
             <a class="cart-link" href="/cart" aria-label="Cart, @cartCount items">
                 <partial name="_Icon" model='"cart"' />
                 <span class="cart-label">Cart</span>
@@ -40,34 +83,11 @@
                 }
             </a>
         </div>
-        <nav class="category-nav" aria-label="Categories">
-            <div class="container">
-                <ul>
-                    <li><a href="/products">All products</a></li>
-                    @foreach (var c in categories)
-                    {
-                        <li class="@(c.Children.Count > 0 ? "has-menu" : null)">
-                            <a href="/c/@c.Slug">@c.Name</a>
-                            @if (c.Children.Count > 0)
-                            {
-                                <ul class="submenu">
-                                    @foreach (var child in c.Children)
-                                    {
-                                        <li><a href="/c/@child.Slug">@child.Name</a></li>
-                                    }
-                                </ul>
-                            }
-                        </li>
-                    }
-                    <li><a href="/products?avail=pre-order" class="nav-highlight">Pre-order deals</a></li>
-                </ul>
-            </div>
-        </nav>
     </header>
 
     @if (TempData["Flash"] is string flash)
     {
-        <div class="container"><div class="flash" role="status">@flash</div></div>
+        <div class="container"><div class="flash" role="status"><partial name="_Icon" model='"check"' /> @flash</div></div>
     }
 
     <main id="main" class="container main">
@@ -76,25 +96,36 @@
 
     <footer class="site-footer">
         <div class="container footer-grid">
-            <div>
-                <div class="logo logo-footer"><span class="logo-mark" aria-hidden="true"></span><span>@shopName</span></div>
+            <div class="footer-brand">
+                <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span><span class="logo-text">@shopName</span></a>
                 <p class="muted">@Fmt.Shop.Tagline</p>
             </div>
             <div>
                 <h3>Shop</h3>
                 <ul>
-                    @foreach (var c in categories.Take(5))
+                    @foreach (var c in categories.Take(6))
                     {
                         <li><a href="/c/@c.Slug">@c.Name</a></li>
                     }
+                    <li><a href="/products?avail=pre-order">Pre-order deals</a></li>
                 </ul>
             </div>
             <div>
-                <h3>How pre-orders work</h3>
-                <p class="muted">Pre-order prices are valid for a limited time. Orders placed within the offer window are delivered in the estimated time shown on the product. Cash on delivery all over Bangladesh.</p>
+                <h3>Delivery</h3>
+                <ul>
+                    @foreach (var z in zones)
+                    {
+                        <li>@z.Name — @Fmt.Money(z.Fee)@(z.Days is null ? "" : $", {z.Days}")</li>
+                    }
+                    <li>Cash on delivery</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Pre-orders</h3>
+                <p class="muted">Pre-order prices are valid for a limited time. Orders placed within the offer window are delivered in the estimated time shown on the product.</p>
             </div>
         </div>
-        <div class="container footer-bottom muted">© @DateTime.UtcNow.Year @shopName</div>
+        <div class="container footer-bottom">© @DateTime.UtcNow.Year @shopName</div>
     </footer>
     <script src="~/js/site.js" asp-append-version="true"></script>
 </body>

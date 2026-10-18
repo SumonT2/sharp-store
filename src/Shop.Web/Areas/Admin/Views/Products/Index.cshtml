@@ -28,7 +28,7 @@
             <tr>
                 <td>
                     <a asp-action="Edit" asp-route-id="@p.Id"><strong>@p.Name</strong></a>
-                    <div class="small muted">@p.Sku @(p.Brand is null ? "" : "· " + p.Brand.Name) @(p.IsPublished ? "" : "· draft")</div>
+                    <div class="small muted">@p.Sku @(p.Brand is null ? "" : "· " + p.Brand.Name) @(p.IsPublished ? "" : "· draft") @(p.IsFeatured ? "· ★ featured" : "")</div>
                 </td>
                 <td>@p.Category?.Name</td>
                 <td class="num">@Fmt.Money(p.Price)@(p.PriceOverride is null ? "" : " *")</td>

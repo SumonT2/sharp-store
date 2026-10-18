@@ -1,0 +1,15 @@
+@model (CatalogResult Result, ListingUrl Url)
+<form method="get" class="price-form" data-ajax>
+    @foreach (var h in Model.Url.HiddenFields("min", "max"))
+    {
+        <input type="hidden" name="@h.Key" value="@h.Value" />
+    }
+    <div class="price-inputs">
+        <label class="sr-only" for="min-@ViewData["PriceFormId"]">Minimum price</label>
+        <input id="min-@ViewData["PriceFormId"]" type="number" name="min" min="0" step="1" inputmode="numeric" placeholder="@(Model.Result.PriceFloor is { } lo ? Math.Floor(lo).ToString() : "Min")" value="@Model.Url.First("min")" />
+        <span aria-hidden="true">–</span>
+        <label class="sr-only" for="max-@ViewData["PriceFormId"]">Maximum price</label>
+        <input id="max-@ViewData["PriceFormId"]" type="number" name="max" min="0" step="1" inputmode="numeric" placeholder="@(Model.Result.PriceCeiling is { } hi ? Math.Ceiling(hi).ToString() : "Max")" value="@Model.Url.First("max")" />
+    </div>
+    <button type="submit" class="btn btn-dark btn-small btn-block">Apply</button>
+</form>

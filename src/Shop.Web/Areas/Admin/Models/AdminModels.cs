@@ -73,6 +73,9 @@ public sealed class ProductEditInput
     [Display(Name = "Published")]
     public bool IsPublished { get; set; } = true;
 
+    [Display(Name = "Featured")]
+    public bool IsFeatured { get; set; }
+
     [Display(Name = "Fixed price (overrides pricing rules)"), Range(0, 100_000_000)]
     public decimal? PriceOverride { get; set; }
 
