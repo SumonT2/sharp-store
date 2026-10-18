@@ -109,6 +109,14 @@ public class PricingEngineTests
     }
 
     [Fact]
+    public void Negative_extra_cost_is_a_supplier_discount()
+    {
+        // Supplier lists 1,000 and gives a 7% dealer discount.
+        var supplier = new Supplier { Currency = "BDT", ExtraCostPercent = -7 };
+        Assert.Equal(930m, PricingEngine.LandedCost(1000m, 1m, supplier));
+    }
+
+    [Fact]
     public void Minimum_margin_is_enforced()
     {
         var rule = new PricingRule { MarkupPercent = 1, MinMargin = 5 };

@@ -9,12 +9,30 @@ namespace Shop.Web.Infrastructure;
 public class ShopFormatter(IOptions<ShopOptions> options, ShopClock clock)
 {
     private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;
+    private readonly CultureInfo _numberCulture = ResolveCulture(options.Value.NumberCulture);
 
     public ShopOptions Shop => options.Value;
     public ShopClock Clock => clock;
 
-    public string Money(decimal? amount) =>
-        amount is { } a ? $"{options.Value.CurrencySymbol}{a.ToString("N2", Culture)}" : "—";
+    public string Money(decimal? amount)
+    {
+        if (amount is not { } a)
+            return "—";
+        var decimals = Math.Clamp(options.Value.PriceDecimals, 0, 4);
+        return $"{options.Value.CurrencySymbol}{options.Value.RoundPrice(a).ToString("N" + decimals, _numberCulture)}";
+    }
+
+    private static CultureInfo ResolveCulture(string? name)
+    {
+        try
+        {
+            return string.IsNullOrWhiteSpace(name) ? CultureInfo.InvariantCulture : CultureInfo.GetCultureInfo(name);
+        }
+        catch (CultureNotFoundException)
+        {
+            return CultureInfo.InvariantCulture;
+        }
+    }
 
     public string DateTime(DateTime? utc) =>
         utc is { } d ? clock.ToLocal(d).ToString("d MMM yyyy, HH:mm", Culture) : "—";

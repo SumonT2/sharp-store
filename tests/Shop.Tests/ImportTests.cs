@@ -137,7 +137,7 @@ public sealed class ImportTests : IDisposable
         p = await Product("P1");
         Assert.Equal(Availability.PreOrder, p.Availability);
         Assert.Equal(15, p.LeadTimeDays);
-        Assert.Equal(100.8m, p.Price); // 600 * 0.14 * 1.2
+        Assert.Equal(101m, p.Price); // 600 * 0.14 * 1.2 = 100.8, rounded up to whole taka
         Assert.Equal(new DateTime(2026, 10, 26, 0, 0, 0), p.OfferEndsAt);
         Assert.Null(p.StockQuantity);
     }
@@ -159,6 +159,62 @@ public sealed class ImportTests : IDisposable
         r = await ImportOffers("supplier_sku,stock\nABC-1,7\n", importer);
         Assert.Equal(1, r.Updated);
         Assert.Equal(7, (await _db.SupplierOffers.SingleAsync()).StockQuantity);
+    }
+
+    [Fact]
+    public async Task Sample_csv_files_import_without_errors()
+    {
+        var samples = Path.Combine(RepoRoot(), "samples", "csv");
+        var catalog = await new CatalogImportService(_db, new CatalogWriter(_db), Pricing(), _clock)
+            .ImportAsync(File.OpenRead(Path.Combine(samples, "1-catalog.csv")), "1-catalog.csv");
+        Assert.Equal(0, catalog.Failed);
+        Assert.Equal(4, catalog.Created);
+        Assert.Contains("keycap puller", (await Product("KB-KV-K68")).Description);
+
+        // The China file also lists products the catalog sample doesn't have; those rows should be the only failures.
+        await ImportCatalog("sku,name\nKB-KV-K100,Keyvo K100\nMS-CL-G5,Clickra G5\n");
+
+        var importer = await AddSupplier("IMP", "BDT", 2, "supplier_sku=Item Code\ncost=Dealer Price\nstock=Qty");
+        var china = await AddSupplier("CN", "CNY", 15);
+        _db.CurrencyRates.Add(new CurrencyRate { Code = "CNY", RateToBase = 16.8m, UpdatedAt = Now });
+        await _db.SaveChangesAsync();
+
+        foreach (var (file, supplier) in new[] { ("2-importer-stock.csv", importer), ("3-importer-own-format.csv", importer), ("4-china-price-list.csv", china) })
+        {
+            var r = await new OfferImportService(_db, new CatalogWriter(_db), Pricing(), _clock).ImportAsync(
+                File.OpenRead(Path.Combine(samples, file)), file, new OfferImportOptions { SupplierId = supplier.Id });
+            Assert.True(r.Failed == 0, $"{file}: {string.Join("; ", r.Messages)}");
+        }
+
+        var k98 = await _db.SupplierOffers.SingleAsync(o => o.SupplierId == importer.Id && o.SupplierSku == "DPI-K98-BRN");
+        Assert.Equal(4, k98.StockQuantity); // updated by the importer's own-format file
+        var g5 = await _db.SupplierOffers.SingleAsync(o => o.SupplierId == china.Id && o.SupplierSku == "SZ-G5");
+        Assert.Equal(new DateTime(2026, 11, 1, 10, 0, 0), g5.ValidFrom); // this test clock uses UTC as shop time
+    }
+
+    private static string RepoRoot()
+    {
+        for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Shop.slnx")))
+                return dir.FullName;
+        }
+        throw new InvalidOperationException("Repository root not found.");
+    }
+
+    [Fact]
+    public async Task Links_only_file_creates_drafts_waiting_for_scraped_prices()
+    {
+        var web = await AddSupplier("GB", "BDT", 2);
+        var r = await ImportOffers("""
+            supplier_sku,name,source_url
+            UG-CH-65,UGREEN 65W charger,https://supplier.example/p/ug-ch-65
+            """, web, createMissing: true);
+        Assert.Equal(0, r.Failed);
+        var offer = await _db.SupplierOffers.Include(o => o.Product).SingleAsync();
+        Assert.Equal(0m, offer.Cost);
+        Assert.False(offer.Product!.IsPublished);
+        Assert.Equal(Availability.OutOfStock, offer.Product.Availability); // until the scraper fills in a price
     }
 
     [Fact]

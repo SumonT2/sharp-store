@@ -131,6 +131,7 @@ public class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(
             e.Property(x => x.Email).HasMaxLength(200);
             e.Property(x => x.Address).HasMaxLength(500);
             e.Property(x => x.City).HasMaxLength(100);
+            e.Property(x => x.DeliveryZone).HasMaxLength(100);
             e.Property(x => x.Notes).HasMaxLength(1000);
             e.Property(x => x.PaymentMethod).HasMaxLength(50);
             e.HasMany(x => x.Items).WithOne().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Cascade);

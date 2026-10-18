@@ -7,6 +7,7 @@
     <div class="confirmation-icon"><partial name="_Icon" model='"check"' /></div>
     <h1>Thank you, @Model.CustomerName!</h1>
     <p class="lead">Your order <strong>#@Model.Number</strong> has been placed. We'll call you on @Model.Phone to confirm.</p>
+    <p class="muted">Delivery to @Model.Address, @Model.City (@Model.DeliveryZone)</p>
 
     <table class="table">
         <thead><tr><th>Item</th><th>Qty</th><th>Estimated delivery</th><th class="num">Total</th></tr></thead>

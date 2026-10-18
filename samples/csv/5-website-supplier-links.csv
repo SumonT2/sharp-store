@@ -1,0 +1,3 @@
+supplier_sku,name,source_url
+UG-EXAMPLE-1,UGREEN product name as on the supplier site,https://supplier.example/product/ugreen-example-1
+UG-EXAMPLE-2,Another UGREEN product,https://supplier.example/product/ugreen-example-2

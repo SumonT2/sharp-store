@@ -71,3 +71,11 @@ document.querySelectorAll("form[data-confirm]").forEach(function (form) {
         if (!window.confirm(form.dataset.confirm)) e.preventDefault();
     });
 });
+
+// Checkout: update delivery fee and total when the delivery area changes.
+document.querySelectorAll("input[name='Input.DeliveryZone']").forEach(function (radio) {
+    radio.addEventListener("change", function () {
+        document.querySelectorAll("[data-delivery-fee]").forEach(function (el) { el.textContent = radio.dataset.feeText; });
+        document.querySelectorAll("[data-order-total]").forEach(function (el) { el.textContent = radio.dataset.totalText; });
+    });
+});

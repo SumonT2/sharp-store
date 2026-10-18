@@ -112,7 +112,7 @@ public sealed class SupplierEditInput
     [Display(Name = "Default delivery time (days)"), Range(0, 365)]
     public int DefaultLeadTimeDays { get; set; } = 2;
 
-    [Display(Name = "Extra cost %"), Range(0, 1000)]
+    [Display(Name = "Extra cost % (negative = discount)"), Range(-100, 1000)]
     public decimal ExtraCostPercent { get; set; }
 
     [Display(Name = "Extra cost per unit"), Range(0, 1_000_000)]

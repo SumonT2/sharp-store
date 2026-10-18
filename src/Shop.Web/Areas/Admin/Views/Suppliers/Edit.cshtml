@@ -20,7 +20,7 @@
             <div class="field"><label asp-for="DefaultLeadTimeDays"></label><input asp-for="DefaultLeadTimeDays" type="number" min="0" /></div>
         </div>
         <div class="field-row">
-            <div class="field"><label asp-for="ExtraCostPercent"></label><input asp-for="ExtraCostPercent" type="number" step="0.01" min="0" /><span class="hint">Shipping, customs, etc. as % of cost.</span></div>
+            <div class="field"><label asp-for="ExtraCostPercent"></label><input asp-for="ExtraCostPercent" type="number" step="0.01" min="0" /><span class="hint">Shipping, customs, etc. as % of cost. Use a negative number for a dealer discount, e.g. -7 when the supplier gives you 7% off its listed price.</span></div>
             <div class="field"><label asp-for="ExtraCostFixed"></label><input asp-for="ExtraCostFixed" type="number" step="0.01" min="0" /><span class="hint">In @Fmt.Shop.BaseCurrency per unit.</span></div>
         </div>
         <div class="field"><label asp-for="Notes"></label><textarea asp-for="Notes" rows="2"></textarea></div>

@@ -15,68 +15,73 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
         decimal ImporterCost, int? ImporterStock, decimal? ChinaCostCny, decimal? WarehouseCost, int? WarehouseStock,
         (string Header, string Value)[] Specs);
 
-    private static readonly (string Header, bool OnCard)[] AttributeHeaders =
+    private static readonly (string Header, bool OnCard, bool Filterable)[] AttributeHeaders =
     [
-        ("Display > Screen Size [inch]", true),
-        ("Display > Resolution", false),
-        ("Display > Refresh Rate [Hz]", false),
-        ("Performance > Processor", false),
-        ("Performance > RAM [GB]", true),
-        ("Storage > Storage [GB]", true),
-        ("Battery > Battery [mAh]", false),
-        ("Battery > Charging Power [W]", true),
-        ("Camera > Main Camera [MP]", false),
-        ("General > Color", false),
-        ("General > Weight [g]", false),
-        ("Connectivity > Connector", false),
-        ("Audio > Noise Cancelling", true),
-        ("Audio > Playtime [h]", false),
+        ("Keyboard > Layout", true, true),
+        ("Keyboard > Switch Type", true, true),
+        ("Keyboard > Hot-swappable", false, true),
+        ("Keyboard > Keycaps", false, true),
+        ("Mouse > Sensor DPI [DPI]", true, true),
+        ("Mouse > Polling Rate [Hz]", false, true),
+        ("Mouse > Buttons", false, true),
+        ("Mouse Pad > Size [mm]", true, true),
+        ("Connectivity > Connection", true, true),
+        ("Connectivity > Battery [mAh]", false, false),
+        ("General > Backlight", false, true),
+        ("General > Weight [g]", false, false),
+        ("General > Color", false, true),
+        ("General > Warranty", false, true),
     ];
 
+    private const string Keyboards = "Keyboards > Mechanical Keyboards";
+    private const string GamingMice = "Mice > Gaming Mice";
+    private const string WirelessMice = "Mice > Wireless Mice";
+
+    // Costs: importer and warehouse in BDT, China partner in CNY.
     private static readonly DemoProduct[] Products =
     [
-        new("PH-NX-A5", "Nexora A5 Smartphone", "Phones > Smartphones", "Nexora", "6.5\" 90 Hz display, 5000 mAh battery and a 50 MP camera.",
-            165m, 40, 980m, null, null,
-            [("Screen Size", "6.5"), ("Resolution", "1600 x 720"), ("Refresh Rate", "90"), ("Processor", "Octa-core 2.2 GHz"), ("RAM", "4"), ("Storage", "128"), ("Battery", "5000"), ("Charging Power", "18"), ("Main Camera", "50"), ("Color", "Midnight Blue"), ("Weight", "192")]),
-        new("PH-NX-A7", "Nexora A7 Smartphone", "Phones > Smartphones", "Nexora", "AMOLED 120 Hz, 8 GB RAM and 45 W fast charging.",
-            235m, 25, 1390m, null, null,
-            [("Screen Size", "6.7"), ("Resolution", "2400 x 1080"), ("Refresh Rate", "120"), ("Processor", "Octa-core 2.6 GHz"), ("RAM", "8"), ("Storage", "256"), ("Battery", "5000"), ("Charging Power", "45"), ("Main Camera", "64"), ("Color", "Graphite"), ("Weight", "188")]),
-        new("PH-NX-X1", "Nexora X1 Pro", "Phones > Smartphones", "Nexora", "Flagship with 12 GB RAM, 512 GB storage and 100 W charging.",
-            520m, 6, 3100m, null, null,
-            [("Screen Size", "6.8"), ("Resolution", "3200 x 1440"), ("Refresh Rate", "120"), ("Processor", "Octa-core 3.2 GHz"), ("RAM", "12"), ("Storage", "512"), ("Battery", "5100"), ("Charging Power", "100"), ("Main Camera", "200"), ("Color", "Titanium"), ("Weight", "215")]),
-        new("PH-OR-M3", "Orbitel M3", "Phones > Smartphones", "Orbitel", "Compact 6.1\" phone with a clean, fast interface.",
-            190m, 0, 1150m, null, null,
-            [("Screen Size", "6.1"), ("Resolution", "2340 x 1080"), ("Refresh Rate", "90"), ("Processor", "Octa-core 2.4 GHz"), ("RAM", "6"), ("Storage", "128"), ("Battery", "4300"), ("Charging Power", "25"), ("Main Camera", "48"), ("Color", "Sand"), ("Weight", "165")]),
-        new("PH-OR-M5", "Orbitel M5 Max", "Phones > Smartphones", "Orbitel", "Big screen, big battery: 6.9\" and 6000 mAh.",
-            280m, 12, 1650m, null, null,
-            [("Screen Size", "6.9"), ("Resolution", "2400 x 1080"), ("Refresh Rate", "120"), ("Processor", "Octa-core 2.8 GHz"), ("RAM", "8"), ("Storage", "256"), ("Battery", "6000"), ("Charging Power", "67"), ("Main Camera", "108"), ("Color", "Forest Green"), ("Weight", "210")]),
-        new("LT-VL-14", "Valtrix Book 14", "Laptops", "Valtrix", "Light 14\" laptop for study and office work.",
-            480m, 8, null, null, null,
-            [("Screen Size", "14"), ("Resolution", "1920 x 1080"), ("Processor", "4-core 3.6 GHz"), ("RAM", "8"), ("Storage", "512"), ("Color", "Silver"), ("Weight", "1350")]),
-        new("LT-VL-16", "Valtrix Book 16 Pro", "Laptops", "Valtrix", "16\" 2.5K screen, 16 GB RAM and 1 TB SSD.",
-            890m, 4, 5600m, null, null,
-            [("Screen Size", "16"), ("Resolution", "2560 x 1600"), ("Refresh Rate", "120"), ("Processor", "8-core 4.5 GHz"), ("RAM", "16"), ("Storage", "1024"), ("Color", "Space Grey"), ("Weight", "1900")]),
-        new("LT-OR-13", "Orbitel Air 13", "Laptops", "Orbitel", "Fanless 13\" ultrabook with all-day battery.",
-            640m, 0, 4100m, null, null,
-            [("Screen Size", "13.3"), ("Resolution", "2560 x 1600"), ("Processor", "8-core 3.8 GHz"), ("RAM", "16"), ("Storage", "512"), ("Color", "Starlight"), ("Weight", "1240")]),
-        new("AC-CH-65", "Voltaro 65 W GaN Charger", "Accessories > Chargers", "Voltaro", "Charges a laptop and phone together from one small plug.",
-            18m, 150, 95m, 15m, 30,
-            [("Charging Power", "65"), ("Connector", "USB-C x2, USB-A x1"), ("Color", "White"), ("Weight", "110")]),
-        new("AC-CH-25", "Voltaro 25 W Fast Charger", "Accessories > Chargers", "Voltaro", "Everyday fast charger for phones.",
-            6.5m, 300, 32m, null, null,
-            [("Charging Power", "25"), ("Connector", "USB-C x1"), ("Color", "Black"), ("Weight", "55")]),
-        new("AC-CH-100", "Voltaro 100 W Desk Charger", "Accessories > Chargers", "Voltaro", "Four ports, 100 W total, for your whole desk.",
-            32m, 0, 170m, null, null,
-            [("Charging Power", "100"), ("Connector", "USB-C x3, USB-A x1"), ("Color", "Grey"), ("Weight", "260")]),
-        new("AC-EB-S1", "Sonique Buds S1", "Accessories > Earbuds", "Sonique", "Wireless earbuds with 30 hours of total playtime.",
-            14m, 80, 70m, null, null,
-            [("Noise Cancelling", "No"), ("Playtime", "30"), ("Color", "White"), ("Weight", "45")]),
-        new("AC-EB-P2", "Sonique Buds Pro 2", "Accessories > Earbuds", "Sonique", "Active noise cancelling and wireless charging case.",
-            38m, 20, 210m, null, null,
-            [("Noise Cancelling", "Yes"), ("Playtime", "36"), ("Color", "Black"), ("Weight", "52")]),
-        new("AC-PB-20", "Voltaro PowerCell 20000", "Accessories > Power Banks", "Voltaro", "20,000 mAh power bank with 22.5 W output.",
-            16m, 60, 85m, null, null,
-            [("Battery", "20000"), ("Charging Power", "22.5"), ("Connector", "USB-C x1, USB-A x2"), ("Color", "Black"), ("Weight", "420")]),
+        new("KB-KV-K68", "Keyvo K68 Hot-swap 65% Keyboard", Keyboards, "Keyvo", "Compact 65% layout with hot-swappable switches and PBT keycaps.",
+            4200m, 25, 210m, 4000m, 5,
+            [("Layout", "65%"), ("Switch Type", "Red (Linear)"), ("Hot-swappable", "Yes"), ("Keycaps", "PBT"), ("Connection", "Wired"), ("Backlight", "RGB"), ("Weight", "780"), ("Color", "Black"), ("Warranty", "1 year")]),
+        new("KB-KV-K75W", "Keyvo K75 Wireless 75% Keyboard", Keyboards, "Keyvo", "Tri-mode wireless 75% board with a gasket mount and a 4000 mAh battery.",
+            6900m, 12, 330m, null, null,
+            [("Layout", "75%"), ("Switch Type", "Brown (Tactile)"), ("Hot-swappable", "Yes"), ("Keycaps", "PBT"), ("Connection", "Wired + 2.4G + Bluetooth"), ("Battery", "4000"), ("Backlight", "RGB"), ("Weight", "950"), ("Color", "White"), ("Warranty", "1 year")]),
+        new("KB-KV-K87", "Keyvo K87 TKL Keyboard", Keyboards, "Keyvo", "Tenkeyless board with clicky blue switches for typists.",
+            3600m, 0, 175m, null, null,
+            [("Layout", "TKL"), ("Switch Type", "Blue (Clicky)"), ("Hot-swappable", "No"), ("Keycaps", "ABS"), ("Connection", "Wired"), ("Backlight", "White"), ("Weight", "820"), ("Color", "Black"), ("Warranty", "6 months")]),
+        new("KB-KV-K100", "Keyvo K100 Full-size Pro Keyboard", Keyboards, "Keyvo", "Full-size wireless board with a number pad, knob and 8000 mAh battery.",
+            8900m, 6, 450m, null, null,
+            [("Layout", "Full-size"), ("Switch Type", "Red (Linear)"), ("Hot-swappable", "Yes"), ("Keycaps", "PBT"), ("Connection", "Wired + 2.4G + Bluetooth"), ("Battery", "8000"), ("Backlight", "RGB"), ("Weight", "1250"), ("Color", "Grey"), ("Warranty", "1 year")]),
+        new("KB-AR-61", "Arkon A61 60% Keyboard", Keyboards, "Arkon", "Small, light 60% keyboard — great first mechanical board.",
+            2900m, 40, 135m, null, null,
+            [("Layout", "60%"), ("Switch Type", "Red (Linear)"), ("Hot-swappable", "Yes"), ("Keycaps", "ABS"), ("Connection", "Wired"), ("Backlight", "RGB"), ("Weight", "560"), ("Color", "White"), ("Warranty", "6 months")]),
+        new("KB-AR-84W", "Arkon A84 Wireless 75% Keyboard", Keyboards, "Arkon", "75% Bluetooth keyboard that switches between three devices.",
+            5400m, 0, 260m, null, null,
+            [("Layout", "75%"), ("Switch Type", "Brown (Tactile)"), ("Hot-swappable", "Yes"), ("Keycaps", "PBT"), ("Connection", "Wired + Bluetooth"), ("Battery", "3000"), ("Backlight", "RGB"), ("Weight", "870"), ("Color", "Black"), ("Warranty", "1 year")]),
+        new("MS-CL-G1", "Clickra G1 Gaming Mouse", GamingMice, "Clickra", "Wired gaming mouse with a 12,000 DPI sensor and RGB lighting.",
+            1600m, 50, 70m, null, null,
+            [("Sensor DPI", "12000"), ("Polling Rate", "1000"), ("Buttons", "6"), ("Connection", "Wired"), ("Backlight", "RGB"), ("Weight", "68"), ("Color", "Black"), ("Warranty", "6 months")]),
+        new("MS-CL-G3W", "Clickra G3 Wireless Gaming Mouse", GamingMice, "Clickra", "59 g wireless mouse with a 26,000 DPI sensor.",
+            3900m, 15, 185m, null, null,
+            [("Sensor DPI", "26000"), ("Polling Rate", "1000"), ("Buttons", "5"), ("Connection", "Wired + 2.4G"), ("Battery", "500"), ("Backlight", "None"), ("Weight", "59"), ("Color", "White"), ("Warranty", "1 year")]),
+        new("MS-CL-G5", "Clickra G5 Ultralight Wireless Mouse", GamingMice, "Clickra", "49 g esports mouse with 8 kHz polling.",
+            5200m, 0, 250m, null, null,
+            [("Sensor DPI", "30000"), ("Polling Rate", "8000"), ("Buttons", "5"), ("Connection", "Wired + 2.4G"), ("Battery", "300"), ("Backlight", "None"), ("Weight", "49"), ("Color", "Black"), ("Warranty", "1 year")]),
+        new("MS-AR-W2", "Arkon W2 Silent Wireless Mouse", WirelessMice, "Arkon", "Quiet-click wireless mouse for office and home.",
+            750m, 120, 30m, null, null,
+            [("Sensor DPI", "1600"), ("Polling Rate", "125"), ("Buttons", "3"), ("Connection", "2.4G"), ("Backlight", "None"), ("Weight", "85"), ("Color", "Grey"), ("Warranty", "6 months")]),
+        new("MS-AR-M7", "Arkon M7 Multi-device Mouse", WirelessMice, "Arkon", "Rechargeable mouse that pairs with three devices.",
+            2400m, 30, 110m, null, null,
+            [("Sensor DPI", "4000"), ("Polling Rate", "125"), ("Buttons", "7"), ("Connection", "2.4G + Bluetooth"), ("Battery", "500"), ("Backlight", "None"), ("Weight", "98"), ("Color", "Black"), ("Warranty", "1 year")]),
+        new("AC-PD-XL", "Clickra Speed Mouse Pad XL", "Accessories > Mouse Pads", "Clickra", "Desk-size cloth pad with stitched edges.",
+            650m, 80, 25m, null, null,
+            [("Size", "900 x 400"), ("Color", "Black"), ("Weight", "520")]),
+        new("AC-SW-RED", "Keyvo Linear Red Switches (35 pcs)", "Accessories > Switches & Keycaps", "Keyvo", "Pre-lubed linear switches for hot-swap keyboards.",
+            900m, 60, 38m, null, null,
+            [("Switch Type", "Red (Linear)"), ("Warranty", "No warranty")]),
+        new("AC-KC-PBT", "Keyvo PBT Keycap Set", "Accessories > Switches & Keycaps", "Keyvo", "Double-shot PBT keycaps that fit most layouts.",
+            1800m, 0, 90m, null, null,
+            [("Keycaps", "PBT"), ("Color", "Beige"), ("Warranty", "No warranty")]),
     ];
 
     public async Task<bool> SeedIfEmptyAsync(CancellationToken ct = default)
@@ -87,35 +92,35 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
         var now = clock.UtcNow;
 
         db.CurrencyRates.AddRange(
-            new CurrencyRate { Code = "CNY", RateToBase = 0.14m, UpdatedAt = now },
-            new CurrencyRate { Code = "EUR", RateToBase = 1.08m, UpdatedAt = now });
+            new CurrencyRate { Code = "CNY", RateToBase = 16.8m, UpdatedAt = now },
+            new CurrencyRate { Code = "USD", RateToBase = 122m, UpdatedAt = now });
 
-        var warehouse = new Supplier { Name = "Own Warehouse", Code = "WH", Kind = SupplierKind.Warehouse, Currency = "USD", DefaultLeadTimeDays = 1 };
+        var warehouse = new Supplier { Name = "Own Warehouse", Code = "WH", Kind = SupplierKind.Warehouse, Currency = "BDT", DefaultLeadTimeDays = 1 };
         var importer = new Supplier
         {
-            Name = "City Electronics Importer", Code = "IMP", Kind = SupplierKind.Importer, Currency = "USD", DefaultLeadTimeDays = 2,
+            Name = "Dhaka Peripherals Importer", Code = "IMP", Kind = SupplierKind.Importer, Currency = "BDT", DefaultLeadTimeDays = 2,
             ImportColumnMap = "supplier_sku=Item Code; cost=Dealer Price; stock=Qty",
         };
         var china = new Supplier
         {
             Name = "Shenzhen Partner", Code = "CN", Kind = SupplierKind.OverseasPartner, Currency = "CNY", DefaultLeadTimeDays = 15,
-            ExtraCostPercent = 8, ExtraCostFixed = 2, Notes = "Sends a price list per period; orders inside the window ship in ~15 days.",
+            ExtraCostPercent = 8, ExtraCostFixed = 250, Notes = "Sends a price list per period; orders inside the window ship in ~15 days.",
         };
         db.Suppliers.AddRange(warehouse, importer, china);
 
         db.PricingRules.AddRange(
-            new PricingRule { Name = "Default markup", MarkupPercent = 18, Rounding = PriceRounding.Ends99, MinMargin = 3 },
-            new PricingRule { Name = "Pre-order (China) markup", Supplier = china, MarkupPercent = 12, Rounding = PriceRounding.Ends99, MinMargin = 3 });
+            new PricingRule { Name = "Default markup", MarkupPercent = 15, Rounding = PriceRounding.UpTo10, MinMargin = 150 },
+            new PricingRule { Name = "Pre-order (China) markup", Supplier = china, MarkupPercent = 10, Rounding = PriceRounding.UpTo10, MinMargin = 150 });
 
         var accessories = await writer.GetOrCreateCategoryPathAsync("Accessories", ct);
-        db.PricingRules.Add(new PricingRule { Name = "Accessories markup", Category = accessories, MarkupPercent = 35, Rounding = PriceRounding.Ends99, MinMargin = 2 });
+        db.PricingRules.Add(new PricingRule { Name = "Accessories markup", Category = accessories, MarkupPercent = 30, Rounding = PriceRounding.UpTo10, MinMargin = 100 });
 
         var attributes = new Dictionary<string, SpecificationAttribute>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (header, onCard) in AttributeHeaders)
+        foreach (var (header, onCard, filterable) in AttributeHeaders)
         {
             var attr = await writer.GetOrCreateAttributeAsync(header, ct);
             attr.ShowOnCard = onCard;
-            attr.IsFilterable = !header.Contains("Resolution") && !header.Contains("Processor") && !header.Contains("Weight") && !header.Contains("Connector");
+            attr.IsFilterable = filterable;
             attributes[attr.Name] = attr;
         }
 

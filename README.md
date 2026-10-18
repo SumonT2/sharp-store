@@ -1,6 +1,6 @@
-# Shop
+# TechBhai
 
-An ASP.NET Core (.NET 10) online store for selling products sourced from several suppliers:
+An ASP.NET Core (.NET 10) online store for mechanical keyboards, mice and accessories in Bangladesh. Prices are in ৳ BDT and shown as 1,24,990; offer dates use Dhaka time; checkout has inside/outside Dhaka delivery charges, cash on delivery and Bangladeshi mobile number checks. It sells products sourced from several suppliers:
 
 - **Supplier offers.** Each product can have offers from several suppliers: your own warehouse, local importers, an overseas partner and scraped websites. Each offer has its own cost, currency, stock, delivery time and optional validity window.
 - **Automatic pricing.** The selling price is calculated from the best available offer using pricing rules (markup %, fixed markup, minimum profit, rounding) and exchange rates. In-stock offers win over pre-orders. When a time-limited offer ends, the store switches to the next best offer automatically.
@@ -42,10 +42,12 @@ Run tests with `dotnet test`.
 | Setting | Meaning |
 |---|---|
 | `ConnectionStrings:Shop` | PostgreSQL connection string |
-| `Shop:Name`, `Shop:BaseCurrency`, `Shop:CurrencySymbol` | Store name and selling currency |
-| `Shop:TimeZone` | Time zone for offer dates in CSVs and on the site, e.g. `Asia/Dhaka` |
+| `Shop:Name`, `Shop:Tagline` | Store name and footer line |
+| `Shop:BaseCurrency`, `Shop:CurrencySymbol`, `Shop:PriceDecimals`, `Shop:NumberCulture` | Selling currency and price format (BDT, ৳, 0, `en-IN`) |
+| `Shop:TimeZone` | Time zone for offer dates in CSVs and on the site (`Asia/Dhaka`) |
 | `Shop:InStockMaxLeadDays` | Offers delivering within this many days count as "in stock"; slower ones are pre-orders |
-| `Shop:ShippingFee`, `Shop:FreeShippingOver` | Flat delivery fee and free-delivery threshold |
+| `Shop:DeliveryZones`, `Shop:FreeShippingOver` | Delivery areas with fees (inside Dhaka ৳70, outside ৳130) and the free-delivery threshold |
+| `Shop:PhonePattern`, `Shop:PhoneHint` | Phone number check at checkout (Bangladeshi mobile numbers) |
 | `Admin:Email`, `Admin:Password` | Creates the first admin when none exists |
 | `Jobs:RepriceIntervalMinutes` | How often prices are recalculated (so offer windows open and close on time) |
 | `Jobs:ScrapingEnabled`, `Jobs:ScrapeIntervalHours` | Automatic scraping schedule |
@@ -58,9 +60,10 @@ Environment variables use `__` instead of `:`. For example, `Shop__TimeZone=Asia
 
 1. **Suppliers.** Add each supplier with its currency, default delivery days and extra costs (shipping or duty as a % plus a fixed amount per unit).
 2. **Pricing.** Add a default rule (e.g. 18% markup, rounding *Ends99*) and exchange rates for foreign currencies.
-3. **Catalog CSV.** Import your products and specifications. Download the template from *CSV import*.
+3. **Catalog CSV.** Import your products and specifications. See [`docs/CSV-GUIDE.md`](docs/CSV-GUIDE.md) and the ready-made examples in [`samples/csv`](samples/csv).
 4. **Stock & price CSV.** Import each supplier's list. Tick *full list* to set missing items to stock 0. For the overseas partner, include `valid_from` and `valid_to` for the offer period, and use `*` as stock when quantity is unlimited.
-5. **Done.** Prices update immediately. They're also recalculated every few minutes, so when the China offer window closes, the product switches to the next best offer or becomes out of stock.
+5. **Website suppliers.** For suppliers that publish prices online (e.g. UGREEN from a distributor), upload a list of product links and let the scraper fill in prices. A dealer discount such as 7% is set on the supplier as extra cost `-7`. See the CSV guide, section 3.
+6. **Done.** Prices update immediately. They're also recalculated every few minutes, so when the China offer window closes, the product switches to the next best offer or becomes out of stock.
 
 ## Deploy to a VPS (Ubuntu)
 

@@ -1,6 +1,10 @@
 @model CheckoutViewModel
 @{
     ViewData["Title"] = "Checkout";
+    var zones = Fmt.Shop.EffectiveDeliveryZones;
+    var selected = OrderService.FindZone(Model.Input.DeliveryZone, Fmt.Shop);
+    var fee = OrderService.ShippingFor(Model.Cart.Subtotal, selected?.Fee ?? zones.Min(z => z.Fee), Fmt.Shop);
+    string FeeText(decimal f) => f == 0 ? "Free" : Fmt.Money(f);
 }
 
 <h1>Checkout</h1>
@@ -22,8 +26,9 @@
             </div>
             <div class="field-row">
                 <div class="field">
-                    <label asp-for="Input.Phone">Phone</label>
-                    <input asp-for="Input.Phone" type="tel" autocomplete="tel" required />
+                    <label asp-for="Input.Phone">Mobile number</label>
+                    <input asp-for="Input.Phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="01XXXXXXXXX" required />
+                    <span class="hint">@Fmt.Shop.PhoneHint</span>
                     <span asp-validation-for="Input.Phone" class="field-error"></span>
                 </div>
                 <div class="field">
@@ -38,9 +43,24 @@
                 <span asp-validation-for="Input.Address" class="field-error"></span>
             </div>
             <div class="field">
-                <label asp-for="Input.City">City</label>
+                <label asp-for="Input.City">City / District</label>
                 <input asp-for="Input.City" autocomplete="address-level2" required />
                 <span asp-validation-for="Input.City" class="field-error"></span>
+            </div>
+            <div class="field">
+                <span class="label">Delivery area</span>
+                <div class="zone-options">
+                    @foreach (var z in zones)
+                    {
+                        var zoneFee = OrderService.ShippingFor(Model.Cart.Subtotal, z.Fee, Fmt.Shop);
+                        <label class="radio-card zone-option">
+                            <input type="radio" name="Input.DeliveryZone" value="@z.Name" checked="@(selected?.Name == z.Name)" required
+                                   data-fee-text="@FeeText(zoneFee)" data-total-text="@Fmt.Money(Model.Cart.Subtotal + zoneFee)" />
+                            <span><strong>@z.Name</strong><span class="muted small">@FeeText(zoneFee)@(z.Days is null ? "" : $" · {z.Days}")</span></span>
+                        </label>
+                    }
+                </div>
+                <span asp-validation-for="Input.DeliveryZone" class="field-error"></span>
             </div>
             <div class="field">
                 <label asp-for="Input.Notes">Order notes <span class="muted">(optional)</span></label>
@@ -54,7 +74,7 @@
                 <span><strong>Cash on delivery</strong><span class="muted small">Pay when your order arrives.</span></span>
             </label>
         </fieldset>
-        <button type="submit" class="btn btn-primary btn-lg btn-block">Place order · @Fmt.Money(Model.Cart.Total)</button>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Place order · <span data-order-total>@Fmt.Money(Model.Cart.Subtotal + fee)</span></button>
     </form>
 
     <aside class="summary">
@@ -75,8 +95,8 @@
         </ul>
         <dl>
             <dt>Subtotal</dt><dd>@Fmt.Money(Model.Cart.Subtotal)</dd>
-            <dt>Delivery</dt><dd>@(Model.Cart.ShippingFee == 0 ? "Free" : Fmt.Money(Model.Cart.ShippingFee))</dd>
-            <dt class="total">Total</dt><dd class="total">@Fmt.Money(Model.Cart.Total)</dd>
+            <dt>Delivery</dt><dd data-delivery-fee>@(selected is null && fee > 0 ? "from " : "")@FeeText(fee)</dd>
+            <dt class="total">Total</dt><dd class="total" data-order-total>@Fmt.Money(Model.Cart.Subtotal + fee)</dd>
         </dl>
         @if (Model.Cart.Items.Any(i => i.Availability == Availability.PreOrder))
         {

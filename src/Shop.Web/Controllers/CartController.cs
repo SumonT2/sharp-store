@@ -68,6 +68,10 @@ public class CartController(CartCookie cart, OrderService orders, ShopDbContext 
             return Redirect("/cart");
         if (view.HasProblems)
             return View(new CheckoutViewModel { Cart = view, Input = input, Error = "Some items in your cart changed. Please review them first." });
+        if (!string.IsNullOrWhiteSpace(input.Phone) && OrderService.NormalizePhone(input.Phone, options.Value) is null)
+            ModelState.AddModelError("Input.Phone", $"Enter a valid phone number ({options.Value.PhoneHint}).");
+        if (!string.IsNullOrWhiteSpace(input.DeliveryZone) && OrderService.FindZone(input.DeliveryZone, options.Value) is null)
+            ModelState.AddModelError("Input.DeliveryZone", "Choose a delivery area.");
         if (!ModelState.IsValid)
             return View(new CheckoutViewModel { Cart = view, Input = input });
 

@@ -21,10 +21,7 @@ services:
       ConnectionStrings__Shop: "Host=db;Database=shop;Username=shop;Password=${DB_PASSWORD}"
       Admin__Email: ${ADMIN_EMAIL:?set ADMIN_EMAIL}
       Admin__Password: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
-      Shop__Name: ${SHOP_NAME:-My Store}
-      Shop__BaseCurrency: ${BASE_CURRENCY:-USD}
-      Shop__CurrencySymbol: ${CURRENCY_SYMBOL:-$}
-      Shop__TimeZone: ${TIME_ZONE:-UTC}
+      Shop__Name: ${SHOP_NAME:-TechBhai}
     volumes:
       - appdata:/data
 

@@ -20,6 +20,7 @@ public class Order
     public string? Email { get; set; }
     public string Address { get; set; } = "";
     public string City { get; set; } = "";
+    public string? DeliveryZone { get; set; }
     public string? Notes { get; set; }
     public string PaymentMethod { get; set; } = "CashOnDelivery";
     public decimal Subtotal { get; set; }

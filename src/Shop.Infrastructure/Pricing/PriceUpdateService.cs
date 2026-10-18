@@ -73,7 +73,7 @@ public class PriceUpdateService(ShopDbContext db, ShopClock clock, IOptions<Shop
 
     private bool Apply(Product product, PricingResult result, string reason)
     {
-        var price = result.Price is { } p ? Math.Round(p, 2) : (decimal?)null;
+        var price = result.Price is { } p ? options.Value.RoundPrice(p) : (decimal?)null;
         var changed = product.Price != price
                       || product.Availability != result.Availability
                       || product.StockQuantity != result.StockQuantity

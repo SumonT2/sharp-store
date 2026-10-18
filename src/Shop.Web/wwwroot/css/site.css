@@ -347,3 +347,9 @@ legend { font-weight: 700; padding: 0 6px; }
     .key-specs { grid-template-columns: 1fr 1fr; }
     .sort-form label { display: none; }
 }
+
+.label { font-weight: 600; font-size: .9rem; }
+.zone-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.zone-option { cursor: pointer; background: var(--surface); border-color: var(--border); }
+.zone-option:has(input:checked) { border-color: var(--primary); background: var(--primary-soft); }
+.hint { font-size: .8rem; color: var(--muted); }

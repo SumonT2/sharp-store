@@ -71,13 +71,13 @@ public class ImportController(ShopDbContext db, CatalogImportService catalogImpo
         var (name, content) = kind switch
         {
             "offers" => ("stock-price-template.csv",
-                "sku,supplier_sku,cost,currency,stock,lead_time_days,valid_from,valid_to,source_url\n" +
-                "PH-NX-A7,CN-A7-256,1390,CNY,*,15,2026-11-01,2026-11-15,\n" +
-                "AC-CH-65,IMP-65W,18.00,USD,120,,,,\n"),
+                "sku,supplier_sku,cost,currency,stock,lead_time_days,valid_from,valid_to\n" +
+                "PH-EX-01,DGI-EX01,19500,BDT,35,2,,\n" +
+                "PH-EX-02,SZ-EX02,960,CNY,*,15,2026-11-01,2026-11-15\n"),
             _ => ("catalog-template.csv",
                 "sku,name,category,brand,short_description,description,image_url,published,compare_at_price," +
-                "spec:Display > Screen Size [inch],spec:Performance > RAM [GB],spec:Storage > Storage [GB],spec:General > Color\n" +
-                "PH-EX-01,Example Phone 128 GB,Phones > Smartphones,ExampleBrand,\"A short, honest summary.\",\"Longer description written by you.\",,yes,,6.5,8,128,Black\n"),
+                "spec:Display > Screen Size [inch],spec:Performance > RAM [GB],spec:Storage > Storage [GB],spec:General > Color,spec:General > Warranty\n" +
+                "PH-EX-01,Example Phone 8/128,Phones > Smartphones,ExampleBrand,\"A short, honest summary.\",\"Longer description written by you.\",,yes,,6.5,8,128,Black,1 year official\n"),
         };
         // UTF-8 BOM so Excel opens non-English text correctly.
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(content)).ToArray();

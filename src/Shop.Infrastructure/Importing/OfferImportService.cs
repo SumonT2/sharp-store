@@ -216,9 +216,10 @@ public class OfferImportService(ShopDbContext db, CatalogWriter writer, PriceUpd
                 return $"Invalid cost \"{costText}\".";
             offer.Cost = cost;
         }
-        else if (isNew)
+        else if (isNew && row.Get("source_url") is null)
         {
-            return "A cost is required for a new offer.";
+            // Without a source URL nobody will fill the cost in later, so it's needed now.
+            return "A cost (or a source_url to read the price from) is required for a new offer.";
         }
 
         if (row.Get("currency") is { } currency)

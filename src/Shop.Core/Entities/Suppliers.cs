@@ -21,7 +21,7 @@ public class Supplier
     public SupplierKind Kind { get; set; }
     public string Currency { get; set; } = "USD";
     public int DefaultLeadTimeDays { get; set; } = 2;
-    /// <summary>Shipping, duty, etc. as a percentage of the converted cost.</summary>
+    /// <summary>Shipping, duty, etc. as a percentage of the converted cost. Negative for a dealer discount (e.g. -7).</summary>
     public decimal ExtraCostPercent { get; set; }
     /// <summary>Fixed extra cost per unit, in the shop's base currency.</summary>
     public decimal ExtraCostFixed { get; set; }

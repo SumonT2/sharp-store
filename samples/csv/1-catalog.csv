@@ -1,0 +1,7 @@
+sku,name,category,brand,short_description,description,image_url,published,compare_at_price,spec:Keyboard > Layout,spec:Keyboard > Switch Type,spec:Keyboard > Hot-swappable,spec:Keyboard > Keycaps,spec:Mouse > Sensor DPI [DPI],spec:Mouse > Polling Rate [Hz],spec:Connectivity > Connection,spec:General > Backlight,spec:General > Weight [g],spec:General > Color,spec:General > Warranty
+KB-KV-K68,Keyvo K68 Hot-swap 65% Keyboard,Keyboards > Mechanical Keyboards,Keyvo,Compact 65% layout with hot-swappable switches and PBT keycaps.,"A small board that keeps the arrow keys.
+
+Includes a USB-C cable and a keycap puller.",,yes,5490,65%,Red (Linear),Yes,PBT,,,Wired,RGB,780,Black,1 year
+KB-KV-K98,Keyvo K98 Wireless 96% Keyboard,Keyboards > Mechanical Keyboards,Keyvo,Number pad in a compact body; tri-mode wireless.,,,yes,,96%,Brown (Tactile),Yes,PBT,,,Wired + 2.4G + Bluetooth,RGB,1080,White,1 year
+MS-CL-G3W,Clickra G3 Wireless Gaming Mouse,Mice > Gaming Mice,Clickra,59 g wireless mouse with a 26000 DPI sensor.,,,yes,,,,,,26000,1000,Wired + 2.4G,None,59,White,1 year
+AC-PD-XL,Clickra Speed Mouse Pad XL,Accessories > Mouse Pads,Clickra,Desk-size cloth pad with stitched edges.,,,yes,,,,,,,,,,520,Black,

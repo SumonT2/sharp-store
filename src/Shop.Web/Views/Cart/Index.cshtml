@@ -57,7 +57,7 @@ else
             <h2>Summary</h2>
             <dl>
                 <dt>Subtotal</dt><dd>@Fmt.Money(Model.Subtotal)</dd>
-                <dt>Delivery</dt><dd>@(Model.ShippingFee == 0 ? "Free" : Fmt.Money(Model.ShippingFee))</dd>
+                <dt>Delivery</dt><dd>@(Model.ShippingFee == 0 ? "Free" : "from " + Fmt.Money(Model.ShippingFee))</dd>
                 <dt class="total">Total</dt><dd class="total">@Fmt.Money(Model.Total)</dd>
             </dl>
             @if (Fmt.Shop.FreeShippingOver is { } free && Model.Subtotal < free && Model.Subtotal > 0)
