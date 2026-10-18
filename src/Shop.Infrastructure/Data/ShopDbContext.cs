@@ -53,7 +53,11 @@ public class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(
             e.HasIndex(x => x.Slug).IsUnique();
             e.HasIndex(x => new { x.IsPublished, x.CategoryId });
             e.HasIndex(x => x.Price);
+            e.HasIndex(x => x.ListPrice);
             e.HasIndex(x => x.BrandId);
+            e.HasIndex(x => x.VariantOfId);
+            e.Property(x => x.VariantLabel).HasMaxLength(100);
+            e.HasOne(x => x.VariantOf).WithMany(x => x.Variants).HasForeignKey(x => x.VariantOfId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Category).WithMany().HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.SetNull);
             e.HasOne(x => x.Brand).WithMany().HasForeignKey(x => x.BrandId).OnDelete(DeleteBehavior.SetNull);
             e.Ignore(x => x.IsPurchasable);

@@ -34,11 +34,26 @@ Example: `samples/csv/1-catalog.csv`
 | `image_url` | | Link to the product photo. Only use photos you took or are allowed to use. |
 | `published` | | `yes` or `no`. New products are published by default. |
 | `featured` | | `yes` to show the product in the home page's *Featured* section. |
+| `variant_of` | | For an option of another product: the main product's SKU (see *Variants* below). `-` makes it a standalone product again. |
+| `variant_label` | | The option's name in the selector, e.g. `Brown (Tactile)` or `Black`. Give the main product a label too. |
 | `compare_at_price` | | An optional "was" price, shown struck through. |
 | `price_override` | | A fixed selling price that ignores the pricing rules. |
 | `spec:Group > Name [unit]` | | One column per specification, e.g. `spec:Display > Screen Size [inch]`. The group and unit are optional. |
 
 Specifications automatically become filters in the store. Keep the values consistent: write `8`, not `8GB` in one row and `8 GB` in another, because the unit is already in the column name.
+
+### Variants (switch types, colours…)
+
+When one product is sold in several options, give each option its own row and SKU, and point the options at the main product with `variant_of`:
+
+```csv
+sku,name,variant_of,variant_label,spec:Keyboard > Switch Type
+KB-K68,Keyvo K68 65% Keyboard,,Red (Linear),Red (Linear)
+KB-K68-BRN,Keyvo K68 65% Keyboard – Brown,KB-K68,Brown (Tactile),Brown (Tactile)
+KB-K68-BLU,Keyvo K68 65% Keyboard – Blue,KB-K68,Blue (Clicky),Blue (Clicky)
+```
+
+The store then shows one product with a price range (৳4,600 – ৳4,950) and an option selector. Each option keeps its own stock, supplier offers and price, so the stock & price CSV works per option SKU as before. Filters match the product when any of its options matches.
 
 ## 2. Stock & price CSV (one supplier per file)
 

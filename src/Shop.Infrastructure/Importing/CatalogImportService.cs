@@ -29,6 +29,8 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
         ["image_url"] = ["image", "picture"],
         ["published"] = ["is_published", "visible"],
         ["featured"] = ["is_featured"],
+        ["variant_of"] = ["parent_sku", "main_sku"],
+        ["variant_label"] = ["option", "option_label"],
         ["price_override"] = ["fixed_price"],
         ["compare_at_price"] = ["old_price", "was_price", "regular_price"],
     };
@@ -60,6 +62,7 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
 
         result.TotalRows = table.Rows.Count;
         var touched = new HashSet<Product>();
+        var variantLinks = new List<(Product Product, string MainSku, int Line)>();
         var seenSkus = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var chunk in table.Rows.Chunk(ChunkSize))
@@ -114,6 +117,8 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
 
                 product.UpdatedAt = clock.UtcNow;
                 touched.Add(product);
+                if (row.Get("variant_of") is { } mainSku)
+                    variantLinks.Add((product, mainSku, row.LineNumber));
                 if (isNew)
                     result.Created++;
                 else
@@ -123,10 +128,60 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
             await db.SaveChangesAsync(ct);
         }
 
+        // Variants are linked once every row is saved, so a variant may come before its main product in the file.
+        var familyIds = await LinkVariantsAsync(variantLinks, result, ct);
+
         // Price overrides may have changed, so refresh prices for the affected products.
-        var summary = await pricing.RepriceAsync(touched.Select(p => p.Id).ToList(), $"Catalog import {fileName}", ct);
+        var summary = await pricing.RepriceAsync(touched.Select(p => p.Id).Concat(familyIds).ToList(), $"Catalog import {fileName}", ct);
         result.Repriced = summary.Changed;
         return await LogAsync(result, fileName, ct);
+    }
+
+    private async Task<List<int>> LinkVariantsAsync(List<(Product Product, string MainSku, int Line)> links, ImportResult result, CancellationToken ct)
+    {
+        var affected = new List<int>();
+        if (links.Count == 0)
+            return affected;
+
+        var skus = links.Select(l => l.MainSku).Where(s => s != "-").Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var mains = await db.Products.Where(p => skus.Contains(p.Sku)).ToDictionaryAsync(p => p.Sku, StringComparer.OrdinalIgnoreCase, ct);
+        var linkedSkus = links.Where(l => l.MainSku != "-").Select(l => l.Product.Sku).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (product, mainSku, line) in links)
+        {
+            if (product.VariantOfId is { } previous)
+                affected.Add(previous);
+            if (mainSku == "-")
+            {
+                product.VariantOfId = null;
+                continue;
+            }
+            if (!mains.TryGetValue(mainSku, out var main))
+            {
+                result.Error(line, $"variant_of: no product with SKU \"{mainSku}\".");
+                continue;
+            }
+            if (main.Id == product.Id)
+            {
+                result.Error(line, "variant_of: a product can't be a variant of itself.");
+                continue;
+            }
+            if (main.VariantOfId is not null || linkedSkus.Contains(main.Sku))
+            {
+                result.Error(line, $"variant_of: {main.Sku} is itself a variant. Use its main product's SKU.");
+                continue;
+            }
+            if (await db.Products.AnyAsync(p => p.VariantOfId == product.Id, ct))
+            {
+                result.Error(line, $"{product.Sku} has its own variants, so it can't become a variant.");
+                continue;
+            }
+            product.VariantOfId = main.Id;
+            affected.Add(main.Id);
+        }
+
+        await db.SaveChangesAsync(ct);
+        return affected;
     }
 
     private async Task<string?> ApplyRowAsync(Product product, CsvRow row, Dictionary<string, SpecificationAttribute> attributes, CancellationToken ct)
@@ -169,6 +224,7 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
             }
         }
 
+        product.VariantLabel = TextOrKeep(row.Get("variant_label"), product.VariantLabel, 100);
         product.ShortDescription = TextOrKeep(row.Get("short_description"), product.ShortDescription, 1000);
         product.Description = TextOrKeep(row.Get("description"), product.Description, 20_000);
         product.ImageUrl = TextOrKeep(row.Get("image_url"), product.ImageUrl, 1000);

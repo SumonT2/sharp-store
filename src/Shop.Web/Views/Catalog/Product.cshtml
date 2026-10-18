@@ -1,10 +1,17 @@
+@using System.Text.Json
 @model ProductViewModel
 @{
-    var p = Model.Product;
-    ViewData["Title"] = p.Name;
-    ViewData["Description"] = p.ShortDescription ?? p.Name;
-    var discount = ShopFormatter.DiscountPercent(p.Price, p.CompareAtPrice);
-    var paragraphs = (p.Description ?? "").Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries);
+    var main = Model.Product;
+    var selected = Model.Selected;
+    ViewData["Title"] = main.Name;
+    ViewData["Description"] = main.ShortDescription ?? main.Name;
+    var paragraphs = (main.Description ?? "").Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries);
+
+    string? ImageFor(Product p) => string.IsNullOrWhiteSpace(p.ImageUrl) ? main.ImageUrl : p.ImageUrl;
+    var imagesDiffer = Model.Options.Select(o => ImageFor(o.Product)).Distinct().Count() > 1;
+    // Values per option id, for specs that differ between options (the page script swaps them).
+    string? Values(SpecRow row) => row.Varies ? JsonSerializer.Serialize(Model.Options.ToDictionary(o => o.Product.Id.ToString(), o => row.ValueFor(o.Product.Id))) : null;
+    var keySpecs = Model.SpecGroups.SelectMany(g => g.Rows).Where(r => r.ShowOnCard).Take(4).ToList();
 }
 
 <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -16,95 +23,67 @@
     }
 </nav>
 
-<div class="product">
-    <div class="product-media">
-        <partial name="_ProductImage" model="(p.ImageUrl, p.Name)" />
+<div class="product" data-product-page>
+    <div class="product-gallery">
+        @if (imagesDiffer)
+        {
+            @foreach (var o in Model.Options)
+            {
+                <div class="product-media" data-option-panel="@o.Product.Id" hidden="@(o != selected)">
+                    <partial name="_ProductImage" model="(ImageFor(o.Product), o.Product.Name)" />
+                </div>
+            }
+        }
+        else
+        {
+            <div class="product-media"><partial name="_ProductImage" model="(main.ImageUrl, main.Name)" /></div>
+        }
     </div>
 
     <div class="product-info">
-        @if (p.Brand is not null)
+        @if (main.Brand is not null)
         {
-            <a class="product-brand" href="/products?brand=@p.Brand.Slug">@p.Brand.Name</a>
+            <a class="product-brand" href="/products?brand=@main.Brand.Slug">@main.Brand.Name</a>
         }
-        <h1>@p.Name</h1>
-        <p class="muted small">SKU: @p.Sku</p>
-        @if (!string.IsNullOrWhiteSpace(p.ShortDescription))
+        <h1>@main.Name</h1>
+        <p class="muted small">SKU: <span data-option-sku>@selected.Product.Sku</span></p>
+        @if (!string.IsNullOrWhiteSpace(main.ShortDescription))
         {
-            <p class="lead">@p.ShortDescription</p>
+            <p class="lead">@main.ShortDescription</p>
         }
 
-        <div class="buy-box">
-            <div class="price price-lg">
-                <span class="price-now">@Fmt.Money(p.Price)</span>
-                @if (discount is { } d)
-                {
-                    <s class="price-was">@Fmt.Money(p.CompareAtPrice)</s>
-                    <span class="tag tag-sale">Save @d%</span>
-                }
-            </div>
-
-            @switch (p.Availability)
-            {
-                case Availability.InStock:
-                    <div class="availability ok">
-                        <partial name="_Icon" model='"check"' />
-                        <div>
-                            <strong>In stock</strong>
-                            <span>Estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 1))</span>
-                        </div>
-                    </div>
-                    break;
-                case Availability.PreOrder:
-                    <div class="availability pre">
-                        <partial name="_Icon" model='"truck"' />
-                        <div>
-                            <strong>Pre-order · delivery in about @(p.LeadTimeDays ?? 15) days</strong>
-                            <span>Order today, estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 15))</span>
-                        </div>
-                    </div>
-                    @if (p.OfferEndsAt is { } ends)
+        @if (Model.HasChoice)
+        {
+            <div class="variant-picker">
+                <p class="variant-title">Option: <strong data-option-label>@selected.Label</strong></p>
+                <div class="variant-options" role="radiogroup" aria-label="Choose an option">
+                    @foreach (var o in Model.Options)
                     {
-                        <div class="offer-timer">
-                            <partial name="_Icon" model='"clock"' />
-                            <span>This price is valid until <strong>@Fmt.DateTime(ends)</strong> — <time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)"></time></span>
-                        </div>
+                        var isSelected = o == selected;
+                        <a class="variant-option @(isSelected ? "is-selected" : null) @(o.Product.IsPurchasable ? null : "is-unavailable")"
+                           href="?v=@Uri.EscapeDataString(o.Product.Sku)" role="radio" aria-checked="@(isSelected ? "true" : "false")"
+                           data-option="@o.Product.Id" data-sku="@o.Product.Sku" data-label="@o.Label">
+                            <span class="variant-name">@o.Label</span>
+                            <span class="variant-meta">@(o.Product.IsPurchasable ? Fmt.Money(o.Product.Price) : "Out of stock")</span>
+                        </a>
                     }
-                    break;
-                default:
-                    <div class="availability out">
-                        <partial name="_Icon" model='"x"' />
-                        <div><strong>Out of stock</strong><span>Check back soon — stock is updated daily.</span></div>
-                    </div>
-                    break;
-            }
+                </div>
+            </div>
+        }
 
-            @if (p.IsPurchasable)
-            {
-                <form method="post" asp-antiforgery="true" action="/cart/add" class="add-form">
-                    <input type="hidden" name="productId" value="@p.Id" />
-                    <label for="qty" class="sr-only">Quantity</label>
-                    <div class="qty">
-                        <button type="button" data-qty="-1" aria-label="Decrease quantity">−</button>
-                        <input id="qty" type="number" name="quantity" value="1" min="1" max="@Model.MaxQuantity" inputmode="numeric" />
-                        <button type="button" data-qty="1" aria-label="Increase quantity">+</button>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <partial name="_Icon" model='"cart"' /> @(p.Availability == Availability.PreOrder ? "Pre-order now" : "Add to cart")
-                    </button>
-                </form>
-                @if (p.StockQuantity is > 0 and <= 5)
-                {
-                    <p class="low-stock">Only @p.StockQuantity left</p>
-                }
-            }
-        </div>
+        @foreach (var o in Model.Options)
+        {
+            <div data-option-panel="@o.Product.Id" hidden="@(o != selected)">
+                <partial name="_BuyBox" model="o" />
+            </div>
+        }
 
-        @if (Model.SpecGroups.Count > 0)
+        @if (keySpecs.Count > 0)
         {
             <ul class="key-specs">
-                @foreach (var s in p.Specifications.Where(s => s.Attribute!.ShowOnCard).OrderBy(s => s.Attribute!.DisplayOrder).Take(4))
+                @foreach (var row in keySpecs)
                 {
-                    <li><span>@s.Attribute!.Name</span><strong>@s.DisplayValue</strong></li>
+                    <li><span>@row.Name</span><strong data-spec-values="@Values(row)">@row.ValueFor(selected.Product.Id)</strong></li>
                 }
             </ul>
         }
@@ -121,11 +100,11 @@
                 <table class="spec-table">
                     <caption>@g.Name</caption>
                     <tbody>
-                        @foreach (var s in g.Items)
+                        @foreach (var row in g.Rows)
                         {
                             <tr>
-                                <th scope="row">@s.Attribute!.Name</th>
-                                <td>@s.DisplayValue</td>
+                                <th scope="row">@row.Name</th>
+                                <td data-spec-values="@Values(row)">@row.ValueFor(selected.Product.Id)</td>
                             </tr>
                         }
                     </tbody>

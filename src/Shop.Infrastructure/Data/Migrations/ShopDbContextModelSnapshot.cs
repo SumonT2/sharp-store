@@ -441,6 +441,26 @@ namespace Shop.Infrastructure.Data.Migrations
                     b.Property<int?>("LeadTimeDays")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ListAvailability")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ListLeadTimeDays")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ListOfferEndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ListOptionCount")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("ListPrice")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<decimal?>("ListPriceMax")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(300)
@@ -480,11 +500,20 @@ namespace Shop.Infrastructure.Data.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("VariantLabel")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("VariantOfId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BrandId");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("ListPrice");
 
                     b.HasIndex("Price");
 
@@ -493,6 +522,8 @@ namespace Shop.Infrastructure.Data.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique();
+
+                    b.HasIndex("VariantOfId");
 
                     b.HasIndex("IsPublished", "CategoryId");
 
@@ -773,9 +804,16 @@ namespace Shop.Infrastructure.Data.Migrations
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Shop.Core.Entities.Product", "VariantOf")
+                        .WithMany("Variants")
+                        .HasForeignKey("VariantOfId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Brand");
 
                     b.Navigation("Category");
+
+                    b.Navigation("VariantOf");
                 });
 
             modelBuilder.Entity("Shop.Core.Entities.ProductSpecification", b =>
@@ -831,6 +869,8 @@ namespace Shop.Infrastructure.Data.Migrations
                     b.Navigation("Offers");
 
                     b.Navigation("Specifications");
+
+                    b.Navigation("Variants");
                 });
 
             modelBuilder.Entity("Shop.Core.Entities.Supplier", b =>

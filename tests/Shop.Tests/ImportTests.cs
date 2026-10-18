@@ -218,6 +218,37 @@ public sealed class ImportTests : IDisposable
     }
 
     [Fact]
+    public async Task Catalog_import_links_variants_and_listing_shows_the_family_price_range()
+    {
+        // The variant row comes before its main product on purpose.
+        var r = await ImportCatalog("""
+            sku,name,variant_of,variant_label
+            K68-BRN,K68 Brown,K68,Brown
+            K68,K68 Keyboard,,Red
+            K68-BAD,K68 Bad,NOPE,Blue
+            """);
+        Assert.Equal(1, r.Failed);
+        var brown = await Product("K68-BRN");
+        var main = await Product("K68");
+        Assert.Equal(main.Id, brown.VariantOfId);
+        Assert.Equal("Red", main.VariantLabel);
+        Assert.Null((await Product("K68-BAD")).VariantOfId);
+
+        var importer = await AddSupplier("IMP", "USD", 2); // the test shop's base currency
+        await ImportOffers("sku,cost,stock\nK68,4600,5\nK68-BRN,4950,2\n", importer);
+
+        main = await _db.Products.AsNoTracking().SingleAsync(p => p.Sku == "K68");
+        Assert.Equal(4600m, main.ListPrice);
+        Assert.Equal(4950m, main.ListPriceMax);
+        Assert.Equal(2, main.ListOptionCount);
+        Assert.Equal(Availability.InStock, main.ListAvailability);
+
+        // A variant can't have variants of its own.
+        r = await ImportCatalog("sku,variant_of\nK68,K68-BRN\n");
+        Assert.Equal(1, r.Failed);
+    }
+
+    [Fact]
     public async Task Offer_import_rejects_invalid_values()
     {
         await ImportCatalog("sku,name\nP1,One\nP2,Two\nP3,Three\nP4,Four\n");

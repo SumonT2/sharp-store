@@ -40,6 +40,7 @@ public class PriceUpdateService(ShopDbContext db, ShopClock clock, IOptions<Shop
         var ids = productIds?.Distinct().Order().ToList()
                   ?? await db.Products.AsNoTracking().OrderBy(p => p.Id).Select(p => p.Id).ToListAsync(ct);
 
+        var familyIds = new HashSet<int>();
         foreach (var chunk in ids.Chunk(BatchSize))
         {
             var products = await db.Products
@@ -51,6 +52,7 @@ public class PriceUpdateService(ShopDbContext db, ShopClock clock, IOptions<Shop
             foreach (var product in products)
             {
                 checkedCount++;
+                familyIds.Add(product.VariantOfId ?? product.Id);
                 var result = PricingEngine.Evaluate(product, product.Offers, ctx);
                 foreach (var w in result.Warnings)
                     warnings.Add(w);
@@ -63,12 +65,34 @@ public class PriceUpdateService(ShopDbContext db, ShopClock clock, IOptions<Shop
             db.ChangeTracker.Clear();
         }
 
+        await UpdateFamiliesAsync(familyIds, ct);
+
         if (changed > 0)
             logger.LogInformation("Repriced {Checked} products, {Changed} changed ({Reason})", checkedCount, changed, reason);
         foreach (var w in warnings)
             logger.LogWarning("Pricing warning: {Warning}", w);
 
         return new RepriceSummary(checkedCount, changed, warnings.ToList());
+    }
+
+    /// <summary>
+    /// Refreshes the price range and availability that listings show for each product family.
+    /// Pass the ids of main products (or of standalone products, which summarise themselves).
+    /// </summary>
+    public async Task UpdateFamiliesAsync(IReadOnlyCollection<int> mainIds, CancellationToken ct = default)
+    {
+        foreach (var chunk in mainIds.Distinct().Order().Chunk(BatchSize))
+        {
+            var mains = await db.Products
+                .Where(p => chunk.Contains(p.Id) && p.VariantOfId == null)
+                .Include(p => p.Variants)
+                .AsSplitQuery()
+                .ToListAsync(ct);
+            foreach (var main in mains)
+                FamilySummary.Compute(main, main.Variants).ApplyTo(main);
+            await db.SaveChangesAsync(ct);
+            db.ChangeTracker.Clear();
+        }
     }
 
     private bool Apply(Product product, PricingResult result, string reason)

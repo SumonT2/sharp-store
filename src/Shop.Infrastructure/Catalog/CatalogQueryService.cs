@@ -49,6 +49,12 @@ public sealed record ProductCard(
     public string? ShortDescription { get; init; }
     public bool IsFeatured { get; init; }
     public bool CanBuy { get; init; }
+    /// <summary>Highest option price, when the product has variants at different prices.</summary>
+    public decimal? PriceMax { get; init; }
+    /// <summary>Options that can be bought now.</summary>
+    public int OptionCount { get; init; }
+    /// <summary>The product comes in options, so "add to cart" happens on the product page.</summary>
+    public bool HasVariants { get; init; }
 }
 
 public sealed record CatalogResult(
@@ -105,7 +111,8 @@ public class CatalogQueryService(ShopDbContext db)
 
         IQueryable<Product> Filtered(string? exclude = null)
         {
-            var q = db.Products.AsNoTracking().Where(p => p.IsPublished);
+            // One row per product family: variants are folded into their main product.
+            var q = db.Products.AsNoTracking().Where(p => p.IsPublished && p.VariantOfId == null);
             if (categoryIds is not null)
                 q = q.Where(p => p.CategoryId != null && categoryIds.Contains(p.CategoryId.Value));
 
@@ -113,26 +120,30 @@ public class CatalogQueryService(ShopDbContext db)
             {
                 q = q.Where(p => p.Name.ToLower().Contains(term)
                                  || p.Sku.ToLower().Contains(term)
-                                 || (p.Brand != null && p.Brand.Name.ToLower().Contains(term)));
+                                 || (p.Brand != null && p.Brand.Name.ToLower().Contains(term))
+                                 || p.Variants.Any(v => v.IsPublished && (v.Sku.ToLower().Contains(term)
+                                                                          || (v.VariantLabel != null && v.VariantLabel.ToLower().Contains(term)))));
             }
 
             if (exclude != BrandKey && query.Brands.Count > 0)
                 q = q.Where(p => p.BrandId != null && brandIds.Contains(p.BrandId.Value));
             if (exclude != AvailabilityKey && query.Availability.Count > 0)
-                q = q.Where(p => query.Availability.Contains(p.Availability));
+                q = q.Where(p => query.Availability.Contains(p.ListAvailability));
             if (exclude != PriceKey)
             {
+                // A family matches when any part of its price range falls inside the requested range.
                 if (query.MinPrice is { } min)
-                    q = q.Where(p => p.Price >= min);
+                    q = q.Where(p => (p.ListPriceMax ?? p.ListPrice) >= min);
                 if (query.MaxPrice is { } max)
-                    q = q.Where(p => p.Price <= max);
+                    q = q.Where(p => p.ListPrice <= max);
             }
 
             foreach (var (attributeId, values) in selectedSpecs)
             {
                 if (exclude == SpecKey(attributeId))
                     continue;
-                q = q.Where(p => p.Specifications.Any(s => s.AttributeId == attributeId && values.Contains(s.Value)));
+                q = q.Where(p => p.Specifications.Any(s => s.AttributeId == attributeId && values.Contains(s.Value))
+                                 || p.Variants.Any(v => v.IsPublished && v.Specifications.Any(s => s.AttributeId == attributeId && values.Contains(s.Value))));
             }
             return q;
         }
@@ -148,9 +159,9 @@ public class CatalogQueryService(ShopDbContext db)
         var specFacets = await SpecFacetsAsync(filtered, Filtered, attributes, selectedSpecs, ct);
 
         var priceBounds = await Filtered(PriceKey)
-            .Where(p => p.Price != null)
+            .Where(p => p.ListPrice != null)
             .GroupBy(_ => 1)
-            .Select(g => new { Min = g.Min(p => p.Price), Max = g.Max(p => p.Price) })
+            .Select(g => new { Min = g.Min(p => p.ListPrice), Max = g.Max(p => p.ListPriceMax ?? p.ListPrice) })
             .FirstOrDefaultAsync(ct);
 
         var breadcrumb = new List<Category>();
@@ -173,19 +184,19 @@ public class CatalogQueryService(ShopDbContext db)
         bool featuredOnly = false,
         CancellationToken ct = default)
     {
-        var q = db.Products.AsNoTracking().Where(p => p.IsPublished && p.Price != null);
+        var q = db.Products.AsNoTracking().Where(p => p.IsPublished && p.VariantOfId == null && p.ListPrice != null);
         if (featuredOnly)
             q = q.Where(p => p.IsFeatured);
         if (availability is { } a)
-            q = q.Where(p => p.Availability == a);
+            q = q.Where(p => p.ListAvailability == a);
         else
-            q = q.Where(p => p.Availability != Availability.OutOfStock);
+            q = q.Where(p => p.ListAvailability != Availability.OutOfStock);
         if (categoryId is { } c)
             q = q.Where(p => p.CategoryId == c);
         if (excludeProductId is { } x)
             q = q.Where(p => p.Id != x);
         if (availability == Availability.PreOrder)
-            q = q.OrderBy(p => p.OfferEndsAt == null).ThenBy(p => p.OfferEndsAt).ThenBy(p => p.Id);
+            q = q.OrderBy(p => p.ListOfferEndsAt == null).ThenBy(p => p.ListOfferEndsAt).ThenBy(p => p.Id);
         else
             q = Sort(q, sort);
         return await ToCardsAsync(q.Take(take), ct);
@@ -198,22 +209,45 @@ public class CatalogQueryService(ShopDbContext db)
             {
                 p.Id, p.Name, p.Slug, p.Sku, p.ShortDescription, p.IsFeatured,
                 Brand = p.Brand != null ? p.Brand.Name : null,
-                p.ImageUrl, p.Price, p.CompareAtPrice, p.Availability, p.LeadTimeDays, p.OfferEndsAt, p.StockQuantity, p.IsPublished,
+                p.ImageUrl, p.ListPrice, p.ListPriceMax, p.CompareAtPrice, p.ListAvailability, p.ListLeadTimeDays, p.ListOfferEndsAt, p.ListOptionCount,
+                HasVariants = p.Variants.Any(v => v.IsPublished),
                 Highlights = p.Specifications
                     .Where(s => s.Attribute!.ShowOnCard)
-                    .OrderBy(s => s.Attribute!.DisplayOrder)
-                    .Select(s => new { s.Value, s.Attribute!.Unit })
+                    .Select(s => new { s.AttributeId, s.Attribute!.DisplayOrder, s.Value, s.Attribute.Unit })
+                    .ToList(),
+                VariantHighlights = p.Variants
+                    .Where(v => v.IsPublished)
+                    .SelectMany(v => v.Specifications.Where(s => s.Attribute!.ShowOnCard))
+                    .Select(s => new { s.AttributeId, s.Attribute!.DisplayOrder, s.Value, s.Attribute.Unit })
                     .ToList(),
             })
             .ToListAsync(ct);
 
         return rows.Select(r => new ProductCard(
-            r.Id, r.Name, r.Slug, r.Sku, r.Brand, r.ImageUrl, r.Price, r.CompareAtPrice, r.Availability, r.LeadTimeDays, r.OfferEndsAt,
-            r.Highlights.Select(h => string.IsNullOrEmpty(h.Unit) ? h.Value : $"{h.Value} {h.Unit}").ToList())
+            r.Id, r.Name, r.Slug, r.Sku, r.Brand, r.ImageUrl, r.ListPrice, r.CompareAtPrice, r.ListAvailability, r.ListLeadTimeDays, r.ListOfferEndsAt,
+            // Where options differ (e.g. switch type): "Red / Brown", or "Red +2" when there are more.
+            r.Highlights.Concat(r.VariantHighlights)
+                .GroupBy(h => new { h.AttributeId, h.DisplayOrder, h.Unit })
+                .OrderBy(g => g.Key.DisplayOrder)
+                .Select(g =>
+                {
+                    var values = g.Select(h => h.Value).Distinct().ToList();
+                    var text = values.Count switch
+                    {
+                        1 => values[0],
+                        2 => $"{values[0]} / {values[1]}",
+                        _ => $"{values[0]} +{values.Count - 1}",
+                    };
+                    return string.IsNullOrEmpty(g.Key.Unit) ? text : $"{text} {g.Key.Unit}";
+                })
+                .ToList())
         {
             ShortDescription = r.ShortDescription,
             IsFeatured = r.IsFeatured,
-            CanBuy = r.IsPublished && r.Price > 0 && r.Availability != Availability.OutOfStock && r.StockQuantity is null or > 0,
+            PriceMax = r.ListPriceMax,
+            OptionCount = r.ListOptionCount,
+            HasVariants = r.HasVariants,
+            CanBuy = r.ListOptionCount > 0,
         }).ToList();
     }
 
@@ -224,12 +258,12 @@ public class CatalogQueryService(ShopDbContext db)
 
     private static IQueryable<Product> Sort(IQueryable<Product> q, CatalogSort sort) => sort switch
     {
-        CatalogSort.PriceLowHigh => q.OrderBy(p => p.Price == null).ThenBy(p => p.Price).ThenBy(p => p.Id),
-        CatalogSort.PriceHighLow => q.OrderBy(p => p.Price == null).ThenByDescending(p => p.Price).ThenBy(p => p.Id),
+        CatalogSort.PriceLowHigh => q.OrderBy(p => p.ListPrice == null).ThenBy(p => p.ListPrice).ThenBy(p => p.Id),
+        CatalogSort.PriceHighLow => q.OrderBy(p => p.ListPrice == null).ThenByDescending(p => p.ListPriceMax ?? p.ListPrice).ThenBy(p => p.Id),
         CatalogSort.Newest => q.OrderByDescending(p => p.CreatedAt).ThenByDescending(p => p.Id),
         CatalogSort.NameAz => q.OrderBy(p => p.Name).ThenBy(p => p.Id),
         // Featured: things you can buy first (in stock, then pre-order), featured products first within each group.
-        _ => q.OrderBy(p => p.Availability == Availability.InStock ? 0 : p.Availability == Availability.PreOrder ? 1 : 2)
+        _ => q.OrderBy(p => p.ListAvailability == Availability.InStock ? 0 : p.ListAvailability == Availability.PreOrder ? 1 : 2)
               .ThenByDescending(p => p.IsFeatured)
               .ThenByDescending(p => p.CreatedAt)
               .ThenByDescending(p => p.Id),
@@ -253,7 +287,7 @@ public class CatalogQueryService(ShopDbContext db)
 
     private static async Task<Facet> AvailabilityFacetAsync(IQueryable<Product> q, CatalogQuery query, CancellationToken ct)
     {
-        var counts = await q.GroupBy(p => p.Availability).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct);
+        var counts = await q.GroupBy(p => p.ListAvailability).Select(g => new { g.Key, Count = g.Count() }).ToListAsync(ct);
         var values = counts
             .OrderBy(c => c.Key == Availability.InStock ? 0 : c.Key == Availability.PreOrder ? 1 : 2)
             .Select(c => new FacetValue(AvailabilitySlug(c.Key), AvailabilityLabel(c.Key), c.Count, query.Availability.Contains(c.Key)))
@@ -308,13 +342,18 @@ public class CatalogQueryService(ShopDbContext db)
 
     private IQueryable<SpecCount> CountSpecValues(IQueryable<Product> products, int? onlyAttributeId = null)
     {
+        // Count product families, not rows: a keyboard offered with three switches counts once per switch value.
         var ids = products.Select(p => p.Id);
-        var specs = db.ProductSpecifications.AsNoTracking().Where(s => s.Attribute!.IsFilterable && ids.Contains(s.ProductId));
+        var specs = db.ProductSpecifications.AsNoTracking().Where(s =>
+            s.Attribute!.IsFilterable
+            && (ids.Contains(s.ProductId)
+                || (s.Product!.VariantOfId != null && s.Product.IsPublished && ids.Contains(s.Product.VariantOfId.Value))));
         if (onlyAttributeId is { } attributeId)
             specs = specs.Where(s => s.AttributeId == attributeId);
         return specs
+            .Select(s => new { s.AttributeId, s.Value, Family = s.Product!.VariantOfId ?? s.ProductId })
             .GroupBy(s => new { s.AttributeId, s.Value })
-            .Select(g => new SpecCount(g.Key.AttributeId, g.Key.Value, g.Count()));
+            .Select(g => new SpecCount(g.Key.AttributeId, g.Key.Value, g.Select(x => x.Family).Distinct().Count()));
     }
 
     /// <summary>Numbers sort numerically (8, 12, 16), text alphabetically.</summary>

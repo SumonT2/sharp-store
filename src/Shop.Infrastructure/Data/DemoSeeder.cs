@@ -86,6 +86,45 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
             [("Keycaps", "PBT"), ("Color", "Beige"), ("Warranty", "No warranty")]),
     ];
 
+    private async Task AddOptionsAsync(
+        string mainSku, string mainLabel, string varyingAttribute,
+        (string Sku, string Label, decimal ImporterCost, int Stock, decimal? ChinaCostCny)[] options,
+        Supplier importer, Supplier china, DateTime now, DateTime windowStart, DateTime windowEnd, CancellationToken ct)
+    {
+        var main = await db.Products.Include(p => p.Specifications).ThenInclude(s => s.Attribute).FirstAsync(p => p.Sku == mainSku, ct);
+        main.VariantLabel = mainLabel;
+        foreach (var (sku, label, cost, stock, cny) in options)
+        {
+            var variant = new Product
+            {
+                Sku = sku,
+                Name = $"{main.Name} – {label}",
+                Slug = await writer.UniqueProductSlugAsync($"{main.Name} {label}", null, ct),
+                VariantOf = main,
+                VariantLabel = label,
+                CategoryId = main.CategoryId,
+                BrandId = main.BrandId,
+                ShortDescription = main.ShortDescription,
+                Description = main.Description,
+                IsPublished = true,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            foreach (var spec in main.Specifications)
+                CatalogWriter.SetSpecification(variant, spec.Attribute!, spec.Attribute!.Name == varyingAttribute ? label : spec.Value);
+            db.Products.Add(variant);
+            db.SupplierOffers.Add(new SupplierOffer { Supplier = importer, Product = variant, SupplierSku = "IMP-" + sku, Cost = cost, StockQuantity = stock, UpdatedAt = now });
+            if (cny is { } c)
+            {
+                db.SupplierOffers.Add(new SupplierOffer
+                {
+                    Supplier = china, Product = variant, SupplierSku = "CN-" + sku, Cost = c, StockQuantity = null,
+                    ValidFrom = windowStart, ValidTo = windowEnd, UpdatedAt = now,
+                });
+            }
+        }
+    }
+
     public async Task<bool> SeedIfEmptyAsync(CancellationToken ct = default)
     {
         if (await db.Products.AnyAsync(ct) || await db.Suppliers.AnyAsync(ct))
@@ -171,6 +210,16 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
                 });
             }
         }
+
+        await db.SaveChangesAsync(ct);
+
+        // Options of the same product: the K68 in three switch types, the G3 mouse in two colours.
+        await AddOptionsAsync("KB-KV-K68", "Red (Linear)", "Switch Type",
+            [("KB-KV-K68-BRN", "Brown (Tactile)", 4350m, 9, null), ("KB-KV-K68-BLU", "Blue (Clicky)", 4150m, 0, 205m)],
+            importer, china, now, windowStart, windowEnd, ct);
+        await AddOptionsAsync("MS-CL-G3W", "White", "Color",
+            [("MS-CL-G3W-BLK", "Black", 3950m, 7, null)],
+            importer, china, now, windowStart, windowEnd, ct);
 
         await db.SaveChangesAsync(ct);
         await pricing.RepriceAllAsync("Demo data", ct);

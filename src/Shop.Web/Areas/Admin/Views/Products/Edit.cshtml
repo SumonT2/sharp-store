@@ -50,6 +50,18 @@
                 <datalist id="brands">@foreach (var b in Model.Brands) { <option value="@b"></option> }</datalist>
             </div>
         </div>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Input.VariantLabel"></label>
+                <input asp-for="Input.VariantLabel" placeholder="e.g. Brown (Tactile) or Black" />
+                <span class="hint">Shown in the option selector when this product has variants.</span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.VariantOfSku"></label>
+                <input asp-for="Input.VariantOfSku" placeholder="Leave empty for a main product" />
+                <span asp-validation-for="Input.VariantOfSku" class="field-error"></span>
+            </div>
+        </div>
         <div class="field"><label asp-for="Input.ShortDescription"></label><textarea asp-for="Input.ShortDescription" rows="2"></textarea></div>
         <div class="field"><label asp-for="Input.Description"></label><textarea asp-for="Input.Description" rows="6"></textarea><span class="hint">Plain text. Leave a blank line between paragraphs. Use your own words or text you have permission to use.</span></div>
         <div class="field"><label asp-for="Input.ImageUrl"></label><input asp-for="Input.ImageUrl" type="url" placeholder="https://…" /><span class="hint">Use your own photos or images the supplier allows you to use.</span><span asp-validation-for="Input.ImageUrl" class="field-error"></span></div>
@@ -74,6 +86,32 @@
     {
         <div class="side-col">
             <section class="panel">
+                <div class="panel-head"><h2>Options</h2></div>
+                @if (Model.Family.Count > 1)
+                {
+                    <p class="small muted">Sold as one product with an option selector. Each option has its own SKU, stock and price.</p>
+                    <ul class="offer-list">
+                        @foreach (var f in Model.Family)
+                        {
+                            <li class="@(f.Id == p.Id ? "is-active" : null)">
+                                <a asp-action="Edit" asp-route-id="@f.Id"><strong>@(f.VariantLabel ?? "Standard")</strong></a>
+                                @if (f.VariantOfId is null) { <span class="badge badge-pre">main</span> }
+                                <div class="small">@f.Sku · @Fmt.Money(f.Price) · <span class="badge @ShopFormatter.AvailabilityClass(f.Availability)">@Fmt.AvailabilityText(f.Availability, f.LeadTimeDays)</span>@(f.IsPublished ? "" : " · draft")</div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="small muted">Sell this product in several options (switch type, colour…) by adding variants.</p>
+                }
+                <form method="post" asp-action="AddVariant" asp-route-id="@p.Id" class="toolbar" style="margin-top:12px">
+                    <input name="label" placeholder="New option, e.g. Blue (Clicky)" required maxlength="100" aria-label="New option label" />
+                    <button class="btn btn-small" type="submit">Add option</button>
+                </form>
+            </section>
+
+            <section class="panel">
                 <div class="panel-head"><h2>Supplier offers</h2><a asp-controller="Offers" asp-action="Edit" asp-route-sku="@p.Sku">Add offer</a></div>
                 @if (Model.Offers.Count == 0)
                 {
@@ -84,7 +122,7 @@
                     {
                         <li class="@(o.Id == p.ActiveOfferId ? "is-active" : null)">
                             <a asp-controller="Offers" asp-action="Edit" asp-route-id="@o.Id"><strong>@o.Supplier!.Name</strong></a>
-                            @if (o.Id == p.ActiveOfferId) { <span class="pill pill-pre">selling from this</span> }
+                            @if (o.Id == p.ActiveOfferId) { <span class="badge badge-pre">selling from this</span> }
                             <div class="small">Cost @o.Cost.ToString("0.##") @o.EffectiveCurrency · stock @(o.StockQuantity?.ToString() ?? "∞") · @o.EffectiveLeadTimeDays days</div>
                             @if (o.ValidFrom is not null || o.ValidTo is not null)
                             {

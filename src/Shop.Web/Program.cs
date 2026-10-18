@@ -101,6 +101,9 @@ static async Task InitializeDatabaseAsync(WebApplication app)
 
     if (config.GetValue("Seed:DemoData", false) && await services.GetRequiredService<DemoSeeder>().SeedIfEmptyAsync())
         logger.LogInformation("Demo data added.");
+
+    // Bring prices, availability and product-family summaries up to date after an upgrade or restart.
+    await services.GetRequiredService<Shop.Infrastructure.Pricing.PriceUpdateService>().RepriceAllAsync("Startup");
 }
 
 public partial class Program;

@@ -139,6 +139,36 @@
     renderCountdowns();
     setInterval(renderCountdowns, 30000);
 
+    // Product options (switch type, colour…): switch price, stock and specs in place.
+    document.addEventListener("click", function (e) {
+        var link = e.target.closest(".variant-option[data-option]");
+        if (!link || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        if (link.classList.contains("is-selected")) return;
+        var id = link.dataset.option;
+        var apply = function () {
+            document.querySelectorAll(".variant-option[data-option]").forEach(function (o) {
+                var on = o === link;
+                o.classList.toggle("is-selected", on);
+                o.setAttribute("aria-checked", String(on));
+            });
+            document.querySelectorAll("[data-option-panel]").forEach(function (panel) {
+                panel.hidden = panel.dataset.optionPanel !== id;
+            });
+            document.querySelectorAll("[data-option-label]").forEach(function (el) { el.textContent = link.dataset.label; });
+            document.querySelectorAll("[data-option-sku]").forEach(function (el) { el.textContent = link.dataset.sku; });
+            document.querySelectorAll("[data-spec-values]").forEach(function (el) {
+                try {
+                    var values = JSON.parse(el.dataset.specValues);
+                    if (id in values) el.textContent = values[id];
+                } catch (err) { /* leave as is */ }
+            });
+        };
+        if (document.startViewTransition && !reduceMotion) document.startViewTransition(apply); else apply();
+        history.replaceState(history.state, "", "?v=" + encodeURIComponent(link.dataset.sku));
+        renderCountdowns();
+    });
+
     // ---------------------------------------------------------------------------------------------
     // Listing: apply filters, sorting and paging in place — no page reload, no scroll jump.
     // The server returns just the listing body when asked with the X-Partial header.

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shop.Core.Entities;
+using Shop.Core.Text;
 using Shop.Infrastructure;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Data;
@@ -66,6 +67,8 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
             ImageUrl = product.ImageUrl,
             IsPublished = product.IsPublished,
             IsFeatured = product.IsFeatured,
+            VariantOfSku = product.VariantOf?.Sku,
+            VariantLabel = product.VariantLabel,
             PriceOverride = product.PriceOverride,
             CompareAtPrice = product.CompareAtPrice,
             SpecsText = string.Join('\n', product.Specifications
@@ -85,6 +88,10 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
 
         if (await db.Products.AnyAsync(p => p.Sku == input.Sku && p.Id != input.Id, ct))
             ModelState.AddModelError(nameof(input.Sku), "Another product already uses this SKU.");
+
+        var (variantOf, variantError) = await ResolveVariantOfAsync(input, product, ct);
+        if (variantError is not null)
+            ModelState.AddModelError(nameof(input.VariantOfSku), variantError);
 
         var specLines = ParseSpecLines(input.SpecsText, out var specError);
         if (specError is not null)
@@ -116,6 +123,10 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
         product.ImageUrl = Clean(input.ImageUrl);
         product.IsPublished = input.IsPublished;
         product.IsFeatured = input.IsFeatured;
+        var previousMainId = product.VariantOfId;
+        product.VariantOf = variantOf;
+        product.VariantOfId = variantOf?.Id;
+        product.VariantLabel = string.IsNullOrWhiteSpace(input.VariantLabel) ? null : input.VariantLabel.Trim();
         product.PriceOverride = input.PriceOverride;
         product.CompareAtPrice = input.CompareAtPrice;
         product.UpdatedAt = clock.UtcNow;
@@ -131,10 +142,63 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
         product.Specifications.RemoveAll(s => s.Attribute is not null && !keep.Contains(s.Attribute));
 
         await db.SaveChangesAsync(ct);
-        await pricing.RepriceAsync([product.Id], "Edited in admin", ct);
+        // Reprice this product and refresh the summary of any family it joined or left.
+        var affected = new List<int> { product.Id };
+        if (previousMainId is { } pm) affected.Add(pm);
+        if (product.VariantOfId is { } nm) affected.Add(nm);
+        await pricing.RepriceAsync(affected, "Edited in admin", ct);
         menu.Invalidate();
         Flash($"Saved {product.Name}.");
         return RedirectToAction(nameof(Edit), new { id = product.Id });
+    }
+
+    /// <summary>Copies a product as a new option of the same family (e.g. another switch type), then opens it.</summary>
+    [HttpPost]
+    public async Task<IActionResult> AddVariant(int id, string label, CancellationToken ct)
+    {
+        label = (label ?? "").Trim();
+        if (label.Length is 0 or > 100)
+        {
+            Flash("Enter an option label, e.g. \"Brown (Tactile)\".", error: true);
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        var source = await LoadAsync(id, ct);
+        if (source is null)
+            return NotFound();
+        var mainId = source.VariantOfId ?? source.Id;
+
+        var baseSku = $"{(await db.Products.Where(p => p.Id == mainId).Select(p => p.Sku).FirstAsync(ct))}-{TextUtil.Slugify(label).ToUpperInvariant()}";
+        var sku = baseSku.Length > 90 ? baseSku[..90] : baseSku;
+        for (var i = 2; await db.Products.AnyAsync(p => p.Sku == sku, ct); i++)
+            sku = $"{baseSku}-{i}";
+
+        var mainName = await db.Products.Where(p => p.Id == mainId).Select(p => p.Name).FirstAsync(ct);
+        var variant = new Product
+        {
+            Sku = sku,
+            Name = $"{mainName} – {label}",
+            Slug = await writer.UniqueProductSlugAsync($"{mainName} {label}", null, ct),
+            VariantOfId = mainId,
+            VariantLabel = label,
+            CategoryId = source.CategoryId,
+            BrandId = source.BrandId,
+            ShortDescription = source.ShortDescription,
+            Description = source.Description,
+            ImageUrl = source.ImageUrl,
+            IsPublished = true,
+            CreatedAt = clock.UtcNow,
+            UpdatedAt = clock.UtcNow,
+            Specifications = source.Specifications
+                .Select(s => new ProductSpecification { AttributeId = s.AttributeId, Value = s.Value, NumericValue = s.NumericValue })
+                .ToList(),
+        };
+        db.Products.Add(variant);
+        await db.SaveChangesAsync(ct);
+        await pricing.RepriceAsync([variant.Id, mainId], "Variant added", ct);
+
+        Flash($"Added option \"{label}\". Adjust its specifications (e.g. switch type), then add a supplier offer so it can be sold.");
+        return RedirectToAction(nameof(Edit), new { id = variant.Id });
     }
 
     [HttpPost]
@@ -149,9 +213,27 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
         return RedirectToAction(nameof(Index));
     }
 
+    private async Task<(Product? Main, string? Error)> ResolveVariantOfAsync(ProductEditInput input, Product? product, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(input.VariantOfSku))
+            return (null, null);
+        var sku = input.VariantOfSku.Trim();
+        var main = await db.Products.FirstOrDefaultAsync(p => p.Sku == sku, ct);
+        if (main is null)
+            return (null, "No product with this SKU.");
+        if (product is not null && main.Id == product.Id)
+            return (null, "A product can't be a variant of itself.");
+        if (main.VariantOfId is not null)
+            return (null, "That product is itself a variant. Use its main product's SKU.");
+        if (product is not null && await db.Products.AnyAsync(p => p.VariantOfId == product.Id, ct))
+            return (null, "This product has its own variants, so it can't become a variant.");
+        return (main, null);
+    }
+
     private Task<Product?> LoadAsync(int id, CancellationToken ct, bool tracking = false)
     {
         var q = db.Products
+            .Include(p => p.VariantOf)
             .Include(p => p.Brand)
             .Include(p => p.Category)
             .Include(p => p.Specifications).ThenInclude(s => s.Attribute)
@@ -171,6 +253,11 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
             Product = product,
             Offers = product is null ? [] : await db.SupplierOffers.AsNoTracking().Include(o => o.Supplier)
                 .Where(o => o.ProductId == product.Id).OrderBy(o => o.Supplier!.Name).ToListAsync(ct),
+            Main = product?.VariantOf,
+            Family = product is null ? [] : await db.Products.AsNoTracking()
+                .Where(p => p.Id == (product.VariantOfId ?? product.Id) || p.VariantOfId == (product.VariantOfId ?? product.Id))
+                .OrderBy(p => p.VariantOfId != null).ThenBy(p => p.Id)
+                .ToListAsync(ct),
             History = product is null ? [] : await db.PriceHistory.AsNoTracking()
                 .Where(h => h.ProductId == product.Id).OrderByDescending(h => h.ChangedAt).Take(10).ToListAsync(ct),
             CategoryPaths = categories.Select(PathOf).Order().ToList(),

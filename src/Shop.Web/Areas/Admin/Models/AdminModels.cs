@@ -76,6 +76,12 @@ public sealed class ProductEditInput
     [Display(Name = "Featured")]
     public bool IsFeatured { get; set; }
 
+    [Display(Name = "Variant of (main product SKU)"), StringLength(100)]
+    public string? VariantOfSku { get; set; }
+
+    [Display(Name = "Option label"), StringLength(100)]
+    public string? VariantLabel { get; set; }
+
     [Display(Name = "Fixed price (overrides pricing rules)"), Range(0, 100_000_000)]
     public decimal? PriceOverride { get; set; }
 
@@ -93,6 +99,9 @@ public sealed class ProductEditViewModel
     public Product? Product { get; init; }
     public IReadOnlyList<SupplierOffer> Offers { get; init; } = [];
     public IReadOnlyList<PriceHistory> History { get; init; } = [];
+    /// <summary>Main product and its variants, when this product belongs to a family.</summary>
+    public IReadOnlyList<Product> Family { get; init; } = [];
+    public Product? Main { get; init; }
     public IReadOnlyList<string> CategoryPaths { get; init; } = [];
     public IReadOnlyList<string> Brands { get; init; } = [];
 }

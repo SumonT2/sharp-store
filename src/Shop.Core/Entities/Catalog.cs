@@ -60,6 +60,24 @@ public class Product
     public int? ActiveOfferId { get; set; }
     public DateTime? PricedAt { get; set; }
 
+    // Variants: options of the same product (switch type, colour…). Each variant is a full product with its own
+    // SKU, offers, stock and price; the main product carries the family summary used by listings.
+    /// <summary>The main product this is an option of; null for main and standalone products.</summary>
+    public int? VariantOfId { get; set; }
+    public Product? VariantOf { get; set; }
+    public List<Product> Variants { get; set; } = new();
+    /// <summary>Short option name shown in the selector, e.g. "Brown (Tactile)".</summary>
+    public string? VariantLabel { get; set; }
+
+    // Family summary on main products (a product without variants summarises itself). Maintained by the pricing engine.
+    public decimal? ListPrice { get; set; }
+    public decimal? ListPriceMax { get; set; }
+    public Availability ListAvailability { get; set; }
+    public int? ListLeadTimeDays { get; set; }
+    public DateTime? ListOfferEndsAt { get; set; }
+    /// <summary>How many options can be bought right now.</summary>
+    public int ListOptionCount { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

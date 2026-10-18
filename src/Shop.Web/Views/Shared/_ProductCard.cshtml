@@ -28,7 +28,14 @@
         <div class="card-top">
             <h3 class="card-title"><a href="/p/@Model.Slug">@Model.Name</a></h3>
             <div class="card-price">
-                <span class="price-now">@Fmt.Money(Model.Price)</span>
+                @if (Model.PriceMax is { } max && max > Model.Price)
+                {
+                    <span class="price-now price-range">@Fmt.Money(Model.Price) – @Fmt.Money(max)</span>
+                }
+                else
+                {
+                    <span class="price-now">@Fmt.Money(Model.Price)</span>
+                }
                 @if (discount is not null)
                 {
                     <s class="price-was">@Fmt.Money(Model.CompareAtPrice)</s>
@@ -52,7 +59,11 @@
             <span class="stock stock-@CatalogQueryService.AvailabilitySlug(Model.Availability)">
                 @(Model.Availability == Availability.PreOrder ? $"Ships in ~{Model.LeadTimeDays} days" : Fmt.AvailabilityText(Model.Availability, Model.LeadTimeDays))
             </span>
-            @if (Model.CanBuy)
+            @if (Model.HasVariants && Model.CanBuy)
+            {
+                <a class="btn btn-outline btn-small" href="/p/@Model.Slug" aria-label="Choose options for @Model.Name">Choose options</a>
+            }
+            else if (Model.CanBuy)
             {
                 <form method="post" asp-antiforgery="true" action="/cart/add">
                     <input type="hidden" name="productId" value="@Model.Id" />
