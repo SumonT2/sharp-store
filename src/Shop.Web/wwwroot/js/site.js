@@ -97,6 +97,29 @@
         document.querySelectorAll("[data-order-total]").forEach(function (el) { el.textContent = radio.dataset.totalText; });
     });
 
+    // Display settings (layout density and theme), remembered in this browser only.
+    var prefDefaults = { density: "comfortable", theme: "system" };
+    function readPref(name) {
+        try { return localStorage.getItem("pref-" + name) || prefDefaults[name]; } catch (e) { return prefDefaults[name]; }
+    }
+    function applyPref(name, value) {
+        var attr = name === "theme" ? "data-theme" : "data-density";
+        if (value === prefDefaults[name]) document.documentElement.removeAttribute(attr);
+        else document.documentElement.setAttribute(attr, value);
+        try {
+            if (value === prefDefaults[name]) localStorage.removeItem("pref-" + name);
+            else localStorage.setItem("pref-" + name, value);
+        } catch (e) { /* not saved, still applied for this page */ }
+        syncHeaderHeight();
+    }
+    document.querySelectorAll("input[data-pref]").forEach(function (input) {
+        input.checked = readPref(input.dataset.pref) === input.value;
+    });
+    document.addEventListener("change", function (e) {
+        var input = e.target;
+        if (input.dataset && input.dataset.pref && input.checked) applyPref(input.dataset.pref, input.value);
+    });
+
     // Live countdown for time-limited offers (re-queried each tick, so swapped-in content is covered too).
     function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
     function renderCountdowns() {

@@ -1,0 +1,10 @@
+@* Applies the visitor's saved display settings before the page is drawn, so there is no flash. *@
+<script>
+    (function () {
+        try {
+            var d = document.documentElement, t = localStorage.getItem("pref-theme"), n = localStorage.getItem("pref-density");
+            if (t === "light" || t === "dark") d.setAttribute("data-theme", t);
+            if (n === "compact") d.setAttribute("data-density", n);
+        } catch (e) { /* storage unavailable: use defaults */ }
+    })();
+</script>
