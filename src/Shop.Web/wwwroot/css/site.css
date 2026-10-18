@@ -34,7 +34,9 @@
     --shadow: 0 1px 2px rgba(16, 18, 27, .05), 0 2px 6px rgba(16, 18, 27, .04);
     --shadow-lg: 0 12px 32px rgba(16, 18, 27, .12);
     --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --gutter: clamp(16px, 3.2vw, 40px);
+    --gutter: clamp(16px, 3vw, 64px);
+    /* Card width grows with the screen, so wide monitors get more (and slightly larger) cards per row. */
+    --card-min: clamp(220px, 14vw, 340px);
     --header-h: 68px;
     --ease: cubic-bezier(.2, .7, .2, 1);
     color-scheme: light;
@@ -88,7 +90,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 
-.container { width: 100%; max-width: 1440px; margin: 0 auto; padding-inline: var(--gutter); }
+/* Fluid: the layout uses the full window width at every size. */
+.container { width: 100%; margin: 0 auto; padding-inline: var(--gutter); }
 .main { padding-top: 22px; padding-bottom: 72px; min-height: 60vh; }
 .muted { color: var(--muted); }
 .small { font-size: .875rem; }
@@ -130,7 +133,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mega-cols a:hover { background: var(--surface-2); color: var(--text); }
 .mega-cols .mega-head { color: var(--text); font-weight: 650; }
 
-.search { flex: 1; display: flex; max-width: 520px; margin-left: auto; background: var(--surface-2); border: 1px solid transparent; border-radius: 999px; transition: border-color .15s, box-shadow .15s, background .15s; }
+.search { flex: 1; display: flex; max-width: clamp(320px, 36vw, 760px); margin-left: auto; background: var(--surface-2); border: 1px solid transparent; border-radius: 999px; transition: border-color .15s, box-shadow .15s, background .15s; }
 .search:focus-within { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
 .search input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 10px 18px; outline: none; }
 .search button { border: 0; background: transparent; padding: 0 16px; color: var(--muted); cursor: pointer; }
@@ -180,7 +183,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .eyebrow .icon { width: 16px; height: 16px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .hero-art { position: relative; display: flex; align-items: center; justify-content: center; perspective: 1100px; min-height: 220px; }
-.hero-art .kb { width: 100%; max-width: 560px; transform: rotateX(28deg) rotateZ(-8deg); filter: drop-shadow(0 30px 30px rgba(16, 18, 27, .18)); transition: transform .6s var(--ease); }
+.hero-art .kb { width: 100%; max-width: clamp(320px, 42vw, 900px); transform: rotateX(28deg) rotateZ(-8deg); filter: drop-shadow(0 30px 30px rgba(16, 18, 27, .18)); transition: transform .6s var(--ease); }
 .hero:hover .hero-art .kb { transform: rotateX(22deg) rotateZ(-6deg) translateY(-4px); }
 .hero-art .mouse-art { position: absolute; right: 2%; bottom: -6%; width: clamp(48px, 9vw, 92px); transform: rotateX(28deg) rotateZ(10deg); filter: drop-shadow(0 18px 18px rgba(16, 18, 27, .18)); }
 .kb-body { fill: var(--ink); }
@@ -206,7 +209,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .category-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 
 /* Horizontal, swipeable row of cards (featured, deals). */
-.rail { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(200px, 21%, 300px); gap: clamp(12px, 1.6vw, 22px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); overscroll-behavior-x: contain; margin-inline: calc(var(--gutter) * -1); padding: 0 var(--gutter) 10px; scrollbar-width: thin; }
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: var(--card-min); gap: clamp(12px, 1.6vw, 22px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); overscroll-behavior-x: contain; margin-inline: calc(var(--gutter) * -1); padding: 0 var(--gutter) 10px; scrollbar-width: thin; }
 .rail > * { scroll-snap-align: start; }
 .deals .rail { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
 .category-tile { display: flex; flex-direction: column; gap: 4px; padding: 20px; border-radius: var(--radius); background: var(--surface-2); color: var(--text); transition: background .2s, transform .2s var(--ease); }
@@ -223,7 +226,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-color-scheme: dark) { .deals { background: linear-gradient(135deg, #1b1e25, #2a2216); } }
 
 /* ---------- Product grid & card ---------- */
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: clamp(12px, 1.6vw, 22px); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--card-min)), 1fr)); gap: clamp(12px, 1.6vw, 22px); }
 .card { display: flex; flex-direction: column; min-width: 0; background: var(--surface); border-radius: var(--radius); }
 .card-media { position: relative; display: block; aspect-ratio: 1; border-radius: var(--radius); background: var(--surface-2); overflow: hidden; }
 .card-media img { width: 100%; height: 100%; object-fit: contain; padding: 10%; mix-blend-mode: multiply; transition: transform .4s var(--ease); }
@@ -345,7 +348,7 @@ body.filters-open::after { content: ""; position: fixed; inset: 0; z-index: 50; 
 
 /* ---------- Product page ---------- */
 .product { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
-.product-media { aspect-ratio: 1; background: var(--surface-2); border-radius: var(--radius-lg); overflow: hidden; position: sticky; top: calc(var(--header-h) + 20px); }
+.product-media { aspect-ratio: 1; max-height: calc(100svh - var(--header-h) - 48px); width: 100%; background: var(--surface-2); border-radius: var(--radius-lg); overflow: hidden; position: sticky; top: calc(var(--header-h) + 20px); }
 .product-media img { width: 100%; height: 100%; object-fit: contain; padding: 8%; mix-blend-mode: multiply; }
 .product-media .img-placeholder span { font-size: clamp(3rem, 2rem + 4vw, 5rem); }
 .product-brand { text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; font-weight: 750; }
