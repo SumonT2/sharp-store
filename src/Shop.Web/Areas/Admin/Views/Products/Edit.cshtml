@@ -1,0 +1,122 @@
+@model ProductEditViewModel
+@{
+    var p = Model.Product;
+    ViewData["Title"] = p?.Name ?? "New product";
+}
+<div class="page-head">
+    <div>
+        <a class="small" asp-action="Index">← Products</a>
+        <h1>@ViewData["Title"]</h1>
+    </div>
+    @if (p is not null)
+    {
+        <div class="actions">
+            @if (p.IsPublished)
+            {
+                <a class="btn" href="/p/@p.Slug" target="_blank" rel="noopener">View in store ↗</a>
+            }
+        </div>
+    }
+</div>
+
+@if (p is not null)
+{
+    <div class="stats stats-compact">
+        <div class="stat"><span>Selling price</span><strong>@Fmt.Money(p.Price)</strong></div>
+        <div class="stat"><span>Availability</span><strong><span class="badge @ShopFormatter.AvailabilityClass(p.Availability)">@Fmt.AvailabilityText(p.Availability, p.LeadTimeDays)</span></strong></div>
+        <div class="stat"><span>Stock (active offer)</span><strong>@(p.StockQuantity?.ToString() ?? (p.Availability == Availability.OutOfStock ? "0" : "not tracked"))</strong></div>
+        <div class="stat"><span>Offer ends</span><strong>@Fmt.DateTime(p.OfferEndsAt)</strong></div>
+    </div>
+}
+
+<div class="admin-grid admin-grid-wide">
+    <form method="post" asp-action="Edit" class="panel">
+        <input type="hidden" asp-for="Input.Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <div class="field-row">
+            <div class="field"><label asp-for="Input.Sku">SKU</label><input asp-for="Input.Sku" /><span asp-validation-for="Input.Sku" class="field-error"></span></div>
+            <div class="field"><label asp-for="Input.Slug">URL slug</label><input asp-for="Input.Slug" placeholder="generated from the name" /></div>
+        </div>
+        <div class="field"><label asp-for="Input.Name">Name</label><input asp-for="Input.Name" /><span asp-validation-for="Input.Name" class="field-error"></span></div>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Input.CategoryPath">Category</label>
+                <input asp-for="Input.CategoryPath" list="category-paths" placeholder="e.g. Phones > Smartphones" />
+                <datalist id="category-paths">@foreach (var c in Model.CategoryPaths) { <option value="@c"></option> }</datalist>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Brand">Brand</label>
+                <input asp-for="Input.Brand" list="brands" />
+                <datalist id="brands">@foreach (var b in Model.Brands) { <option value="@b"></option> }</datalist>
+            </div>
+        </div>
+        <div class="field"><label asp-for="Input.ShortDescription"></label><textarea asp-for="Input.ShortDescription" rows="2"></textarea></div>
+        <div class="field"><label asp-for="Input.Description"></label><textarea asp-for="Input.Description" rows="6"></textarea><span class="hint">Plain text. Leave a blank line between paragraphs. Use your own words or text you have permission to use.</span></div>
+        <div class="field"><label asp-for="Input.ImageUrl"></label><input asp-for="Input.ImageUrl" type="url" placeholder="https://…" /><span class="hint">Use your own photos or images the supplier allows you to use.</span><span asp-validation-for="Input.ImageUrl" class="field-error"></span></div>
+        <div class="field">
+            <label asp-for="Input.SpecsText"></label>
+            <textarea asp-for="Input.SpecsText" rows="10" class="mono" placeholder="Display > Screen Size [inch]: 6.5&#10;Performance > RAM [GB]: 8"></textarea>
+            <span class="hint">One per line: <code>Group &gt; Name [unit]: value</code>. Group and unit are optional. Lines you remove are deleted.</span>
+            <span asp-validation-for="Input.SpecsText" class="field-error"></span>
+        </div>
+        <div class="field-row">
+            <div class="field"><label asp-for="Input.PriceOverride"></label><input asp-for="Input.PriceOverride" type="number" step="0.01" min="0" /><span class="hint">Leave empty to use pricing rules.</span></div>
+            <div class="field"><label asp-for="Input.CompareAtPrice"></label><input asp-for="Input.CompareAtPrice" type="number" step="0.01" min="0" /></div>
+        </div>
+        <label class="check"><input asp-for="Input.IsPublished" /> Published (visible in the store)</label>
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Save</button>
+        </div>
+    </form>
+
+    @if (p is not null)
+    {
+        <div class="side-col">
+            <section class="panel">
+                <div class="panel-head"><h2>Supplier offers</h2><a asp-controller="Offers" asp-action="Edit" asp-route-sku="@p.Sku">Add offer</a></div>
+                @if (Model.Offers.Count == 0)
+                {
+                    <p class="muted">No offers yet, so this product is out of stock. Add an offer or import a stock CSV.</p>
+                }
+                <ul class="offer-list">
+                    @foreach (var o in Model.Offers)
+                    {
+                        <li class="@(o.Id == p.ActiveOfferId ? "is-active" : null)">
+                            <a asp-controller="Offers" asp-action="Edit" asp-route-id="@o.Id"><strong>@o.Supplier!.Name</strong></a>
+                            @if (o.Id == p.ActiveOfferId) { <span class="pill pill-pre">selling from this</span> }
+                            <div class="small">Cost @o.Cost.ToString("0.##") @o.EffectiveCurrency · stock @(o.StockQuantity?.ToString() ?? "∞") · @o.EffectiveLeadTimeDays days</div>
+                            @if (o.ValidFrom is not null || o.ValidTo is not null)
+                            {
+                                <div class="small muted">Valid @Fmt.DateTime(o.ValidFrom) → @Fmt.DateTime(o.ValidTo)</div>
+                            }
+                            @if (!o.IsActive) { <div class="small muted">Inactive</div> }
+                            @if (o.LastScrapeError is not null) { <div class="small problem">@o.LastScrapeError</div> }
+                        </li>
+                    }
+                </ul>
+            </section>
+
+            @if (Model.History.Count > 0)
+            {
+                <section class="panel">
+                    <h2>Price history</h2>
+                    <table class="table table-compact">
+                        <tbody>
+                            @foreach (var h in Model.History)
+                            {
+                                <tr><td class="small muted">@Fmt.DateTime(h.ChangedAt)</td><td class="num">@Fmt.Money(h.OldPrice) → @Fmt.Money(h.NewPrice)</td></tr>
+                                <tr class="sub"><td colspan="2" class="small muted">@h.Reason</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </section>
+            }
+
+            <form method="post" asp-action="Delete" asp-route-id="@p.Id" class="panel danger" data-confirm="Delete this product permanently? Orders keep their copy of the name and price.">
+                <h2>Delete</h2>
+                <p class="small muted">Prefer unpublishing to keep the product's history.</p>
+                <button class="btn btn-danger" type="submit">Delete product</button>
+            </form>
+        </div>
+    }
+</div>

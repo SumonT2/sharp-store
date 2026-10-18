@@ -1,0 +1,58 @@
+@model Order
+@{
+    ViewData["Title"] = $"Order #{Model.Number}";
+    var suppliers = (Dictionary<int, string>)ViewBag.Suppliers;
+    var cost = Model.Items.Sum(i => (i.UnitCost ?? 0) * i.Quantity);
+}
+<a class="small" asp-action="Index">← Orders</a>
+<div class="page-head">
+    <h1>Order #@Model.Number <span class="status status-@Model.Status.ToString().ToLower()">@Model.Status</span></h1>
+    <form method="post" asp-action="SetStatus" asp-route-id="@Model.Id" class="toolbar">
+        <select name="status" aria-label="Status">
+            @foreach (var s in Enum.GetValues<OrderStatus>())
+            {
+                <option value="@s" selected="@(s == Model.Status)">@s</option>
+            }
+        </select>
+        <button class="btn btn-primary" type="submit">Update status</button>
+    </form>
+</div>
+<div class="admin-grid admin-grid-wide">
+    <section class="panel">
+        <h2>Items</h2>
+        <table class="table">
+            <thead><tr><th>Item</th><th>Supplier</th><th>Delivery by</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Total</th></tr></thead>
+            <tbody>
+                @foreach (var i in Model.Items)
+                {
+                    <tr>
+                        <td><a asp-controller="Products" asp-action="Edit" asp-route-id="@i.ProductId">@i.Name</a><div class="small muted">@i.Sku @(i.Availability == Availability.PreOrder ? "· pre-order" : "")</div></td>
+                        <td>@(i.SupplierId is { } sid && suppliers.TryGetValue(sid, out var name) ? name : "—")</td>
+                        <td>@Fmt.Date(i.EstimatedDeliveryDate)</td>
+                        <td class="num">@i.Quantity</td>
+                        <td class="num">@Fmt.Money(i.UnitPrice)<div class="small muted">cost @Fmt.Money(i.UnitCost)</div></td>
+                        <td class="num">@Fmt.Money(i.LineTotal)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr><td colspan="5">Subtotal</td><td class="num">@Fmt.Money(Model.Subtotal)</td></tr>
+                <tr><td colspan="5">Delivery</td><td class="num">@Fmt.Money(Model.ShippingFee)</td></tr>
+                <tr class="total"><td colspan="5">Total</td><td class="num">@Fmt.Money(Model.Total)</td></tr>
+                <tr><td colspan="5" class="muted">Estimated profit (before delivery costs)</td><td class="num muted">@Fmt.Money(Model.Subtotal - cost)</td></tr>
+            </tfoot>
+        </table>
+    </section>
+    <section class="panel">
+        <h2>Customer</h2>
+        <dl class="details">
+            <dt>Name</dt><dd>@Model.CustomerName</dd>
+            <dt>Phone</dt><dd><a href="tel:@Model.Phone">@Model.Phone</a></dd>
+            @if (Model.Email is not null) { <dt>Email</dt><dd><a href="mailto:@Model.Email">@Model.Email</a></dd> }
+            <dt>Address</dt><dd>@Model.Address, @Model.City</dd>
+            <dt>Payment</dt><dd>Cash on delivery</dd>
+            <dt>Placed</dt><dd>@Fmt.DateTime(Model.CreatedAt)</dd>
+            @if (Model.Notes is not null) { <dt>Notes</dt><dd>@Model.Notes</dd> }
+        </dl>
+    </section>
+</div>

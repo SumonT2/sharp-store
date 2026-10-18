@@ -1,0 +1,101 @@
+﻿@inject CartCookie Cart
+@inject CategoryMenu Menu
+@{
+    var categories = await Menu.GetAsync();
+    var cartCount = Cart.Count();
+    var shopName = Fmt.Shop.Name;
+    var title = ViewData["Title"] as string;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(string.IsNullOrEmpty(title) ? shopName : $"{title} · {shopName}")</title>
+    @if (ViewData["Description"] is string description)
+    {
+        <meta name="description" content="@description" />
+    }
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231d4ed8'/%3E%3Cpath d='M9 12h14l-1.5 10h-11z' fill='white'/%3E%3C/svg%3E" />
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="container header-row">
+            <a class="logo" href="/">
+                <span class="logo-mark" aria-hidden="true"></span>
+                <span>@shopName</span>
+            </a>
+            <form class="search" action="/search" method="get" role="search">
+                <input type="search" name="q" placeholder="Search products, brands, SKUs…" aria-label="Search" value="@Context.Request.Query["q"]" />
+                <button type="submit" aria-label="Search"><partial name="_Icon" model='"search"' /></button>
+            </form>
+            <a class="cart-link" href="/cart" aria-label="Cart, @cartCount items">
+                <partial name="_Icon" model='"cart"' />
+                <span class="cart-label">Cart</span>
+                @if (cartCount > 0)
+                {
+                    <span class="cart-count">@cartCount</span>
+                }
+            </a>
+        </div>
+        <nav class="category-nav" aria-label="Categories">
+            <div class="container">
+                <ul>
+                    <li><a href="/products">All products</a></li>
+                    @foreach (var c in categories)
+                    {
+                        <li class="@(c.Children.Count > 0 ? "has-menu" : null)">
+                            <a href="/c/@c.Slug">@c.Name</a>
+                            @if (c.Children.Count > 0)
+                            {
+                                <ul class="submenu">
+                                    @foreach (var child in c.Children)
+                                    {
+                                        <li><a href="/c/@child.Slug">@child.Name</a></li>
+                                    }
+                                </ul>
+                            }
+                        </li>
+                    }
+                    <li><a href="/products?avail=pre-order" class="nav-highlight">Pre-order deals</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    @if (TempData["Flash"] is string flash)
+    {
+        <div class="container"><div class="flash" role="status">@flash</div></div>
+    }
+
+    <main id="main" class="container main">
+        @RenderBody()
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="logo logo-footer"><span class="logo-mark" aria-hidden="true"></span><span>@shopName</span></div>
+                <p class="muted">Genuine products from trusted importers. Prices and stock are updated daily.</p>
+            </div>
+            <div>
+                <h3>Shop</h3>
+                <ul>
+                    @foreach (var c in categories.Take(5))
+                    {
+                        <li><a href="/c/@c.Slug">@c.Name</a></li>
+                    }
+                </ul>
+            </div>
+            <div>
+                <h3>How pre-orders work</h3>
+                <p class="muted">Pre-order prices are valid for a limited time. Orders placed within the offer window are delivered in the estimated time shown on the product.</p>
+            </div>
+        </div>
+        <div class="container footer-bottom muted">© @DateTime.UtcNow.Year @shopName</div>
+    </footer>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

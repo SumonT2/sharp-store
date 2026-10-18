@@ -1,0 +1,78 @@
+@model CartView
+@{
+    ViewData["Title"] = "Your cart";
+}
+
+<h1>Your cart</h1>
+
+@if (Model.IsEmpty)
+{
+    <div class="empty">
+        <h2>Your cart is empty</h2>
+        <p><a class="btn btn-primary" href="/products">Continue shopping</a></p>
+    </div>
+}
+else
+{
+    <div class="cart">
+        <div class="cart-items">
+            @foreach (var item in Model.Items)
+            {
+                <div class="cart-item @(item.Problem is null ? null : "has-problem")">
+                    <a class="cart-thumb" href="/p/@item.Slug"><partial name="_ProductImage" model="(item.ImageUrl, item.Name)" /></a>
+                    <div class="cart-main">
+                        <a class="cart-name" href="/p/@item.Slug">@item.Name</a>
+                        <div class="muted small">SKU @item.Sku · @Fmt.Money(item.UnitPrice) each</div>
+                        <span class="badge @ShopFormatter.AvailabilityClass(item.Availability)">@Fmt.AvailabilityText(item.Availability, item.LeadTimeDays)</span>
+                        @if (item.Availability == Availability.PreOrder && item.OfferEndsAt is { } ends)
+                        {
+                            <div class="small muted">Pre-order price valid until @Fmt.DateTime(ends)</div>
+                        }
+                        @if (item.Problem is not null)
+                        {
+                            <div class="problem">@item.Problem</div>
+                        }
+                    </div>
+                    <form method="post" asp-antiforgery="true" action="/cart/update" class="cart-qty">
+                        <input type="hidden" name="productId" value="@item.ProductId" />
+                        <label class="sr-only" for="q-@item.ProductId">Quantity</label>
+                        <select id="q-@item.ProductId" name="quantity" data-autosubmit>
+                            @for (var i = 1; i <= Math.Max(item.MaxQuantity, item.Quantity); i++)
+                            {
+                                <option value="@i" selected="@(i == item.Quantity)">@i</option>
+                            }
+                        </select>
+                        <noscript><button class="btn btn-small" type="submit">Update</button></noscript>
+                    </form>
+                    <div class="cart-line-total">@Fmt.Money(item.LineTotal)</div>
+                    <form method="post" asp-antiforgery="true" action="/cart/remove">
+                        <input type="hidden" name="productId" value="@item.ProductId" />
+                        <button class="icon-btn" type="submit" aria-label="Remove @item.Name"><partial name="_Icon" model='"x"' /></button>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <aside class="summary">
+            <h2>Summary</h2>
+            <dl>
+                <dt>Subtotal</dt><dd>@Fmt.Money(Model.Subtotal)</dd>
+                <dt>Delivery</dt><dd>@(Model.ShippingFee == 0 ? "Free" : Fmt.Money(Model.ShippingFee))</dd>
+                <dt class="total">Total</dt><dd class="total">@Fmt.Money(Model.Total)</dd>
+            </dl>
+            @if (Fmt.Shop.FreeShippingOver is { } free && Model.Subtotal < free && Model.Subtotal > 0)
+            {
+                <p class="small muted">Add @Fmt.Money(free - Model.Subtotal) more for free delivery.</p>
+            }
+            @if (Model.HasProblems)
+            {
+                <p class="problem">Please fix the highlighted items before checking out.</p>
+            }
+            else
+            {
+                <a class="btn btn-primary btn-block" href="/checkout">Checkout</a>
+            }
+            <a class="btn btn-ghost btn-block" href="/products">Continue shopping</a>
+        </aside>
+    </div>
+}

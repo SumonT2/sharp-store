@@ -1,0 +1,86 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h1>Checkout</h1>
+
+@if (Model.Error is not null)
+{
+    <div class="alert alert-error" role="alert">@Model.Error</div>
+}
+
+<div class="cart">
+    <form method="post" asp-antiforgery="true" action="/checkout" class="checkout-form" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <fieldset>
+            <legend>Delivery details</legend>
+            <div class="field">
+                <label asp-for="Input.CustomerName">Full name</label>
+                <input asp-for="Input.CustomerName" autocomplete="name" required />
+                <span asp-validation-for="Input.CustomerName" class="field-error"></span>
+            </div>
+            <div class="field-row">
+                <div class="field">
+                    <label asp-for="Input.Phone">Phone</label>
+                    <input asp-for="Input.Phone" type="tel" autocomplete="tel" required />
+                    <span asp-validation-for="Input.Phone" class="field-error"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Input.Email">Email <span class="muted">(optional)</span></label>
+                    <input asp-for="Input.Email" type="email" autocomplete="email" />
+                    <span asp-validation-for="Input.Email" class="field-error"></span>
+                </div>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Address">Address</label>
+                <textarea asp-for="Input.Address" rows="2" autocomplete="street-address" required></textarea>
+                <span asp-validation-for="Input.Address" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.City">City</label>
+                <input asp-for="Input.City" autocomplete="address-level2" required />
+                <span asp-validation-for="Input.City" class="field-error"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Input.Notes">Order notes <span class="muted">(optional)</span></label>
+                <textarea asp-for="Input.Notes" rows="2"></textarea>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>Payment</legend>
+            <label class="radio-card">
+                <input type="radio" name="payment" value="cod" checked />
+                <span><strong>Cash on delivery</strong><span class="muted small">Pay when your order arrives.</span></span>
+            </label>
+        </fieldset>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Place order · @Fmt.Money(Model.Cart.Total)</button>
+    </form>
+
+    <aside class="summary">
+        <h2>Your order</h2>
+        <ul class="summary-items">
+            @foreach (var item in Model.Cart.Items)
+            {
+                <li>
+                    <span>@item.Quantity × @item.Name
+                        @if (item.Availability == Availability.PreOrder)
+                        {
+                            <span class="badge badge-pre">Pre-order ~@item.LeadTimeDays days</span>
+                        }
+                    </span>
+                    <span>@Fmt.Money(item.LineTotal)</span>
+                </li>
+            }
+        </ul>
+        <dl>
+            <dt>Subtotal</dt><dd>@Fmt.Money(Model.Cart.Subtotal)</dd>
+            <dt>Delivery</dt><dd>@(Model.Cart.ShippingFee == 0 ? "Free" : Fmt.Money(Model.Cart.ShippingFee))</dd>
+            <dt class="total">Total</dt><dd class="total">@Fmt.Money(Model.Cart.Total)</dd>
+        </dl>
+        @if (Model.Cart.Items.Any(i => i.Availability == Availability.PreOrder))
+        {
+            <p class="small muted">Pre-order items ship separately when they arrive. The pre-order price is locked in when you place the order.</p>
+        }
+    </aside>
+</div>

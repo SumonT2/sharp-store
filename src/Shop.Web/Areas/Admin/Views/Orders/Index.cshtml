@@ -1,0 +1,34 @@
+@model List<Order>
+@{
+    ViewData["Title"] = "Orders";
+    var status = (OrderStatus?)ViewBag.Status;
+}
+<h1>Orders</h1>
+<form method="get" class="toolbar">
+    <input type="search" name="q" value="@ViewBag.Q" placeholder="Order number, phone or name" />
+    <select name="status" data-autosubmit>
+        <option value="">All statuses</option>
+        @foreach (var s in Enum.GetValues<OrderStatus>())
+        {
+            <option value="@s" selected="@(s == status)">@s</option>
+        }
+    </select>
+    <button class="btn" type="submit">Filter</button>
+</form>
+<table class="table">
+    <thead><tr><th>Order</th><th>Customer</th><th>City</th><th>Status</th><th class="num">Total</th></tr></thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td><a asp-action="Details" asp-route-id="@o.Id"><strong>#@o.Number</strong></a><div class="small muted">@Fmt.DateTime(o.CreatedAt)</div></td>
+                <td>@o.CustomerName<div class="small muted">@o.Phone</div></td>
+                <td>@o.City</td>
+                <td><span class="status status-@o.Status.ToString().ToLower()">@o.Status</span></td>
+                <td class="num">@Fmt.Money(o.Total)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (Model.Count == 0) { <p class="muted">No orders found.</p> }
+<partial name="_Pager" model="(int)ViewBag.Page" view-data="ViewData" />

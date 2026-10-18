@@ -1,0 +1,27 @@
+@model (Facet Facet, ListingUrl Url, string Key)
+@{
+    const int visible = 6;
+    var values = Model.Facet.Values;
+    var anySelected = values.Any(v => v.Selected);
+}
+<details class="facet" open>
+    <summary>@Model.Facet.Name</summary>
+    <ul class="facet-list @(values.Count > visible ? "is-collapsible" : null)">
+        @for (var i = 0; i < values.Count; i++)
+        {
+            var v = values[i];
+            var hidden = i >= visible && !v.Selected;
+            <li class="@(hidden ? "facet-extra" : null)">
+                <a class="facet-option @(v.Selected ? "is-selected" : null)" href="@Model.Url.Toggle(Model.Key, v.Value)" rel="nofollow" aria-pressed="@(v.Selected ? "true" : "false")">
+                    <span class="checkbox" aria-hidden="true"></span>
+                    <span class="facet-label">@v.Label</span>
+                    <span class="facet-count">@(anySelected && !v.Selected ? "+" : "")@v.Count</span>
+                </a>
+            </li>
+        }
+    </ul>
+    @if (values.Count > visible)
+    {
+        <button type="button" class="link-btn" data-facet-more>Show all @values.Count</button>
+    }
+</details>

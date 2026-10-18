@@ -1,0 +1,47 @@
+@model List<Product>
+@{
+    ViewData["Title"] = "Products";
+    var status = ViewBag.Status as string;
+    var statuses = new[] { ("", "All"), ("in-stock", "In stock"), ("pre-order", "Pre-order"), ("out-of-stock", "Out of stock"), ("draft", "Drafts") };
+}
+<div class="page-head">
+    <h1>Products <span class="muted">(@ViewBag.Total)</span></h1>
+    <a class="btn btn-primary" asp-action="Edit">New product</a>
+</div>
+
+<form method="get" class="toolbar">
+    <input type="search" name="q" value="@ViewBag.Q" placeholder="Search name or SKU" />
+    <select name="status" data-autosubmit>
+        @foreach (var (value, label) in statuses)
+        {
+            <option value="@value" selected="@(value == (status ?? ""))">@label</option>
+        }
+    </select>
+    <button class="btn" type="submit">Filter</button>
+</form>
+
+<table class="table">
+    <thead><tr><th>Product</th><th>Category</th><th class="num">Price</th><th>Availability</th><th class="num">Stock</th><th>Priced</th></tr></thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@p.Id"><strong>@p.Name</strong></a>
+                    <div class="small muted">@p.Sku @(p.Brand is null ? "" : "· " + p.Brand.Name) @(p.IsPublished ? "" : "· draft")</div>
+                </td>
+                <td>@p.Category?.Name</td>
+                <td class="num">@Fmt.Money(p.Price)@(p.PriceOverride is null ? "" : " *")</td>
+                <td><span class="badge @ShopFormatter.AvailabilityClass(p.Availability)">@Fmt.AvailabilityText(p.Availability, p.LeadTimeDays)</span></td>
+                <td class="num">@(p.StockQuantity?.ToString() ?? (p.Availability == Availability.OutOfStock ? "0" : "∞"))</td>
+                <td class="small muted">@Fmt.DateTime(p.PricedAt)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (Model.Count == 0)
+{
+    <p class="muted">No products found. <a asp-controller="Import" asp-action="Index">Import a catalog CSV</a>.</p>
+}
+<p class="small muted">* fixed price set on the product</p>
+<partial name="_Pager" model="(int)ViewBag.Page" view-data="ViewData" />

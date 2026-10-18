@@ -1,0 +1,171 @@
+@model ListingViewModel
+@{
+    var r = Model.Result;
+    var url = Model.Url;
+    ViewData["Title"] = Model.Title;
+    ViewData["Description"] = r.Category?.Description ?? $"{Model.Title} — compare specifications and prices.";
+    var currentSort = url.First("sort") ?? "featured";
+
+    // Active filter chips: (label, link that removes it)
+    var chips = new List<(string Label, string Href)>();
+    foreach (var v in r.BrandFacet.Values.Where(v => v.Selected)) chips.Add((v.Label, url.Toggle("brand", v.Value)));
+    foreach (var v in r.AvailabilityFacet.Values.Where(v => v.Selected)) chips.Add((v.Label, url.Toggle("avail", v.Value)));
+    foreach (var f in r.SpecFacets)
+        foreach (var v in f.Values.Where(v => v.Selected)) chips.Add(($"{f.Name}: {v.Label}", url.Toggle(ListingUrl.SpecKey(f.Key), v.Value)));
+    if (url.First("min") is not null || url.First("max") is not null)
+        chips.Add(($"Price: {url.First("min") ?? "0"} – {url.First("max") ?? "any"}", url.Without("min", "max")));
+}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    @foreach (var c in r.Breadcrumb)
+    {
+        <span aria-hidden="true">/</span>
+        @if (c == r.Category)
+        {
+            <span aria-current="page">@c.Name</span>
+        }
+        else
+        {
+            <a href="/c/@c.Slug">@c.Name</a>
+        }
+    }
+</nav>
+
+<div class="listing-head">
+    <div>
+        <h1>@Model.Title</h1>
+        <p class="muted">@r.Total product@(r.Total == 1 ? "" : "s")</p>
+    </div>
+    <div class="listing-tools">
+        <button type="button" class="btn btn-ghost filter-toggle" data-toggle-filters aria-controls="filters" aria-expanded="false">
+            <partial name="_Icon" model='"filter"' /> Filters
+        </button>
+        <form method="get" class="sort-form">
+            @foreach (var h in url.HiddenFields("sort"))
+            {
+                <input type="hidden" name="@h.Key" value="@h.Value" />
+            }
+            <label for="sort">Sort by</label>
+            <select id="sort" name="sort" data-autosubmit>
+                @foreach (var (slug, label) in ListingUrl.SortOptions)
+                {
+                    <option value="@slug" selected="@(slug == currentSort)">@label</option>
+                }
+            </select>
+            <noscript><button class="btn btn-small" type="submit">Apply</button></noscript>
+        </form>
+    </div>
+</div>
+
+@if (r.Subcategories.Count > 0)
+{
+    <div class="subcategories">
+        @foreach (var c in r.Subcategories)
+        {
+            <a class="chip" href="/c/@c.Slug">@c.Name</a>
+        }
+    </div>
+}
+
+<div class="listing">
+    <aside id="filters" class="filters" aria-label="Filters">
+        <div class="filters-head">
+            <strong>Filters</strong>
+            @if (url.HasFilters)
+            {
+                <a href="@url.ClearFilters()">Clear all</a>
+            }
+            <button type="button" class="icon-btn filters-close" data-toggle-filters aria-label="Close filters"><partial name="_Icon" model='"x"' /></button>
+        </div>
+
+        @if (r.AvailabilityFacet.Values.Count > 0)
+        {
+            <partial name="_Facet" model='(r.AvailabilityFacet, url, "avail")' />
+        }
+
+        <details class="facet" open>
+            <summary>Price</summary>
+            <form method="get" class="price-form">
+                @foreach (var h in url.HiddenFields("min", "max"))
+                {
+                    <input type="hidden" name="@h.Key" value="@h.Value" />
+                }
+                <div class="price-inputs">
+                    <input type="number" name="min" min="0" step="1" inputmode="decimal" placeholder="@(r.PriceFloor is { } lo ? Math.Floor(lo).ToString() : "Min")" value="@url.First("min")" aria-label="Minimum price" />
+                    <span aria-hidden="true">–</span>
+                    <input type="number" name="max" min="0" step="1" inputmode="decimal" placeholder="@(r.PriceCeiling is { } hi ? Math.Ceiling(hi).ToString() : "Max")" value="@url.First("max")" aria-label="Maximum price" />
+                </div>
+                <button type="submit" class="btn btn-small">Apply</button>
+            </form>
+        </details>
+
+        @if (r.BrandFacet.Values.Count > 0)
+        {
+            <partial name="_Facet" model='(r.BrandFacet, url, "brand")' />
+        }
+
+        @foreach (var f in r.SpecFacets)
+        {
+            <partial name="_Facet" model="(f, url, ListingUrl.SpecKey(f.Key))" />
+        }
+    </aside>
+
+    <section class="results">
+        @if (chips.Count > 0)
+        {
+            <div class="active-filters">
+                @foreach (var (label, href) in chips)
+                {
+                    <a class="chip chip-active" href="@href" aria-label="Remove filter @label">@label <partial name="_Icon" model='"x"' /></a>
+                }
+            </div>
+        }
+
+        @if (r.Products.Count == 0)
+        {
+            <div class="empty">
+                <h2>No products match</h2>
+                <p>Try removing a filter@(url.HasFilters ? "" : " or searching for something else").</p>
+                @if (url.HasFilters)
+                {
+                    <a class="btn btn-primary" href="@url.ClearFilters()">Clear filters</a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="grid">
+                @foreach (var p in r.Products)
+                {
+                    <partial name="_ProductCard" model="p" />
+                }
+            </div>
+        }
+
+        @if (r.PageCount > 1)
+        {
+            <nav class="pagination" aria-label="Pages">
+                @if (r.Page > 1)
+                {
+                    <a href="@url.With("page", (r.Page - 1).ToString())" rel="prev">Previous</a>
+                }
+                @for (var i = Math.Max(1, r.Page - 2); i <= Math.Min(r.PageCount, r.Page + 2); i++)
+                {
+                    if (i == r.Page)
+                    {
+                        <span aria-current="page">@i</span>
+                    }
+                    else
+                    {
+                        <a href="@url.With("page", i.ToString())">@i</a>
+                    }
+                }
+                @if (r.Page < r.PageCount)
+                {
+                    <a href="@url.With("page", (r.Page + 1).ToString())" rel="next">Next</a>
+                }
+            </nav>
+        }
+    </section>
+</div>

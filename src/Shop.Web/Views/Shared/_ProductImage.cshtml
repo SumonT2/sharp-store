@@ -1,0 +1,11 @@
+@model (string? Url, string Name)
+@if (!string.IsNullOrWhiteSpace(Model.Url))
+{
+    <img src="@Model.Url" alt="@Model.Name" loading="lazy" decoding="async" />
+}
+else
+{
+    var initials = string.Concat(Model.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => char.ToUpperInvariant(w[0])));
+    var hue = Model.Name.Sum(c => (int)c) * 37 % 360;
+    <div class="img-placeholder" style="--hue:@hue" role="img" aria-label="@Model.Name"><span>@initials</span></div>
+}

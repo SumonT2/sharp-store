@@ -1,0 +1,33 @@
+# Run the store and its database on a VPS:  docker compose -f deploy/docker-compose.yml up -d --build
+# Put secrets in deploy/.env (see .env.example). The site listens on 127.0.0.1:8080; put nginx in front for HTTPS.
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in deploy/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: ..
+    restart: unless-stopped
+    depends_on: [db]
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      ConnectionStrings__Shop: "Host=db;Database=shop;Username=shop;Password=${DB_PASSWORD}"
+      Admin__Email: ${ADMIN_EMAIL:?set ADMIN_EMAIL}
+      Admin__Password: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      Shop__Name: ${SHOP_NAME:-My Store}
+      Shop__BaseCurrency: ${BASE_CURRENCY:-USD}
+      Shop__CurrencySymbol: ${CURRENCY_SYMBOL:-$}
+      Shop__TimeZone: ${TIME_ZONE:-UTC}
+    volumes:
+      - appdata:/data
+
+volumes:
+  pgdata:
+  appdata:

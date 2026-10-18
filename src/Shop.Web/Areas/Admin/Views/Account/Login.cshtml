@@ -1,0 +1,34 @@
+@model LoginInput
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Sign in · @Fmt.Shop.Name</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="login-page">
+    <form method="post" asp-antiforgery="true" action="/admin/login" class="login-card">
+        <div class="logo"><span class="logo-mark" aria-hidden="true"></span><span>@Fmt.Shop.Name</span></div>
+        <h1>Admin sign in</h1>
+        <div asp-validation-summary="ModelOnly" class="alert alert-error"></div>
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div class="field">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" autocomplete="username" autofocus />
+            <span asp-validation-for="Email" class="field-error"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" autocomplete="current-password" />
+            <span asp-validation-for="Password" class="field-error"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+</body>
+</html>

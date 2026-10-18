@@ -1,0 +1,160 @@
+@model ProductViewModel
+@{
+    var p = Model.Product;
+    ViewData["Title"] = p.Name;
+    ViewData["Description"] = p.ShortDescription ?? p.Name;
+    var discount = ShopFormatter.DiscountPercent(p.Price, p.CompareAtPrice);
+    var paragraphs = (p.Description ?? "").Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries);
+}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    @foreach (var c in Model.Breadcrumb)
+    {
+        <span aria-hidden="true">/</span>
+        <a href="/c/@c.Slug">@c.Name</a>
+    }
+</nav>
+
+<div class="product">
+    <div class="product-media">
+        <partial name="_ProductImage" model="(p.ImageUrl, p.Name)" />
+    </div>
+
+    <div class="product-info">
+        @if (p.Brand is not null)
+        {
+            <a class="product-brand" href="/products?brand=@p.Brand.Slug">@p.Brand.Name</a>
+        }
+        <h1>@p.Name</h1>
+        <p class="muted small">SKU: @p.Sku</p>
+        @if (!string.IsNullOrWhiteSpace(p.ShortDescription))
+        {
+            <p class="lead">@p.ShortDescription</p>
+        }
+
+        <div class="buy-box">
+            <div class="price price-lg">
+                <span class="price-now">@Fmt.Money(p.Price)</span>
+                @if (discount is { } d)
+                {
+                    <s class="price-was">@Fmt.Money(p.CompareAtPrice)</s>
+                    <span class="pill pill-sale">Save @d%</span>
+                }
+            </div>
+
+            @switch (p.Availability)
+            {
+                case Availability.InStock:
+                    <div class="availability ok">
+                        <partial name="_Icon" model='"check"' />
+                        <div>
+                            <strong>In stock</strong>
+                            <span>Estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 1))</span>
+                        </div>
+                    </div>
+                    break;
+                case Availability.PreOrder:
+                    <div class="availability pre">
+                        <partial name="_Icon" model='"truck"' />
+                        <div>
+                            <strong>Pre-order · delivery in about @(p.LeadTimeDays ?? 15) days</strong>
+                            <span>Order today, estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 15))</span>
+                        </div>
+                    </div>
+                    @if (p.OfferEndsAt is { } ends)
+                    {
+                        <div class="offer-timer">
+                            <partial name="_Icon" model='"clock"' />
+                            <span>This price is valid until <strong>@Fmt.DateTime(ends)</strong> — <time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)"></time></span>
+                        </div>
+                    }
+                    break;
+                default:
+                    <div class="availability out">
+                        <partial name="_Icon" model='"x"' />
+                        <div><strong>Out of stock</strong><span>Check back soon — stock is updated daily.</span></div>
+                    </div>
+                    break;
+            }
+
+            @if (p.IsPurchasable)
+            {
+                <form method="post" asp-antiforgery="true" action="/cart/add" class="add-form">
+                    <input type="hidden" name="productId" value="@p.Id" />
+                    <label for="qty" class="sr-only">Quantity</label>
+                    <div class="qty">
+                        <button type="button" data-qty="-1" aria-label="Decrease quantity">−</button>
+                        <input id="qty" type="number" name="quantity" value="1" min="1" max="@Model.MaxQuantity" inputmode="numeric" />
+                        <button type="button" data-qty="1" aria-label="Increase quantity">+</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <partial name="_Icon" model='"cart"' /> @(p.Availability == Availability.PreOrder ? "Pre-order now" : "Add to cart")
+                    </button>
+                </form>
+                @if (p.StockQuantity is > 0 and <= 5)
+                {
+                    <p class="low-stock">Only @p.StockQuantity left</p>
+                }
+            }
+        </div>
+
+        @if (Model.SpecGroups.Count > 0)
+        {
+            <ul class="key-specs">
+                @foreach (var s in p.Specifications.Where(s => s.Attribute!.ShowOnCard).OrderBy(s => s.Attribute!.DisplayOrder).Take(4))
+                {
+                    <li><span>@s.Attribute!.Name</span><strong>@s.DisplayValue</strong></li>
+                }
+            </ul>
+        }
+    </div>
+</div>
+
+<div class="product-details">
+    @if (Model.SpecGroups.Count > 0)
+    {
+        <section class="specs" id="specifications">
+            <h2>Specifications</h2>
+            @foreach (var g in Model.SpecGroups)
+            {
+                <table class="spec-table">
+                    <caption>@g.Name</caption>
+                    <tbody>
+                        @foreach (var s in g.Items)
+                        {
+                            <tr>
+                                <th scope="row">@s.Attribute!.Name</th>
+                                <td>@s.DisplayValue</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+    }
+
+    @if (paragraphs.Length > 0)
+    {
+        <section class="description">
+            <h2>Description</h2>
+            @foreach (var para in paragraphs)
+            {
+                <p>@para</p>
+            }
+        </section>
+    }
+</div>
+
+@if (Model.Related.Count > 0)
+{
+    <section class="section">
+        <h2 class="section-title">You may also like</h2>
+        <div class="grid">
+            @foreach (var c in Model.Related)
+            {
+                <partial name="_ProductCard" model="c" />
+            }
+        </div>
+    </section>
+}

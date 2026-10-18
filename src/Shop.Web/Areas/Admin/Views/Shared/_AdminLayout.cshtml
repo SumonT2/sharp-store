@@ -1,0 +1,43 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"] as string;
+    string Active(string name) => string.Equals(controller, name, StringComparison.OrdinalIgnoreCase) ? "is-active" : "";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>@ViewData["Title"] · Admin · @Fmt.Shop.Name</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin">
+    <aside class="admin-nav">
+        <a class="logo" href="/admin"><span class="logo-mark" aria-hidden="true"></span><span>Admin</span></a>
+        <nav>
+            <a class="@Active("Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+            <a class="@Active("Orders")" asp-area="Admin" asp-controller="Orders" asp-action="Index">Orders</a>
+            <a class="@Active("Products")" asp-area="Admin" asp-controller="Products" asp-action="Index">Products</a>
+            <a class="@Active("Offers")" asp-area="Admin" asp-controller="Offers" asp-action="Index">Supplier offers</a>
+            <a class="@Active("Import")" asp-area="Admin" asp-controller="Import" asp-action="Index">CSV import</a>
+            <a class="@Active("Suppliers")" asp-area="Admin" asp-controller="Suppliers" asp-action="Index">Suppliers</a>
+            <a class="@Active("Pricing")" asp-area="Admin" asp-controller="Pricing" asp-action="Index">Pricing &amp; currency</a>
+            <a class="@Active("Jobs")" asp-area="Admin" asp-controller="Jobs" asp-action="Index">Jobs</a>
+        </nav>
+        <div class="admin-nav-foot">
+            <a href="/" target="_blank" rel="noopener">View store ↗</a>
+            <a href="/admin/account/password">Change password</a>
+            <form method="post" asp-antiforgery="true" action="/admin/logout"><button type="submit" class="link-btn">Sign out @User.Identity?.Name</button></form>
+        </div>
+    </aside>
+    <main class="admin-main">
+        @if (TempData["AdminFlash"] is string flash)
+        {
+            <div class="alert @(TempData["AdminFlashError"] is true ? "alert-error" : "alert-ok")" role="status">@flash</div>
+        }
+        @RenderBody()
+    </main>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+@model JobStatus
+@{
+    ViewData["Title"] = "Jobs";
+    var o = (Shop.Infrastructure.JobOptions)ViewBag.Options;
+}
+<h1>Jobs</h1>
+<div class="admin-grid">
+    <section class="panel">
+        <h2>Recalculate prices</h2>
+        <p class="muted small">Runs automatically every @o.RepriceIntervalMinutes minutes so offer windows open and close on time. Also runs after every import or edit.</p>
+        <p>Last run: <strong>@Fmt.DateTime(Model.LastRepriceAt)</strong> @Model.LastRepriceResult</p>
+        <form method="post" asp-action="Reprice"><button class="btn btn-primary" type="submit">Recalculate now</button></form>
+    </section>
+    <section class="panel">
+        <h2>Scrape web-source prices</h2>
+        <p class="muted small">
+            @if (o.ScrapingEnabled) { <text>Runs automatically every @o.ScrapeIntervalHours hours.</text> }
+            else { <text>Automatic scraping is off (Jobs:ScrapingEnabled in settings).</text> }
+            Respects robots.txt and waits between requests to the same site.
+        </p>
+        <p>Last run: <strong>@Fmt.DateTime(Model.LastScrapeAt)</strong> @Model.LastScrapeResult @(Model.ScrapeRunning ? "(running…)" : "")</p>
+        <form method="post" asp-action="Scrape"><button class="btn" type="submit" disabled="@Model.ScrapeRunning">Scrape now</button></form>
+    </section>
+</div>

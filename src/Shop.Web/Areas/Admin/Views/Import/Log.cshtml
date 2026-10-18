@@ -1,0 +1,21 @@
+@model ImportLog
+@{
+    ViewData["Title"] = "Import result";
+    var messages = (Model.Messages ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+}
+<a class="small" asp-action="Index">← CSV import</a>
+<h1>@Model.FileName</h1>
+<p class="muted">@(Model.Kind == ImportKind.Catalog ? "Catalog import" : $"Stock & price import for {Model.Supplier?.Name}") · @Fmt.DateTime(Model.StartedAt)</p>
+<div class="stats stats-compact">
+    <div class="stat"><span>Rows</span><strong>@Model.TotalRows</strong></div>
+    <div class="stat"><span>Created</span><strong>@Model.Created</strong></div>
+    <div class="stat"><span>Updated</span><strong>@Model.Updated</strong></div>
+    <div class="stat"><span>Failed</span><strong class="@(Model.Failed > 0 ? "problem" : null)">@Model.Failed</strong></div>
+</div>
+@if (messages.Length > 0)
+{
+    <section class="panel">
+        <h2>Messages</h2>
+        <ul class="log">@foreach (var m in messages) { <li>@m</li> }</ul>
+    </section>
+}

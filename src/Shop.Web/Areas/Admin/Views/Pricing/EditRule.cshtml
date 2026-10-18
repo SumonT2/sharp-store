@@ -1,0 +1,42 @@
+@model RuleEditInput
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New pricing rule" : Model.Name;
+    var suppliers = (List<Option>)ViewBag.Suppliers;
+    var categories = (List<Option>)ViewBag.Categories;
+    var brands = (List<Option>)ViewBag.Brands;
+}
+<a class="small" asp-action="Index">← Pricing</a>
+<h1>@ViewData["Title"]</h1>
+<div class="admin-grid admin-grid-wide">
+    <form method="post" asp-action="EditRule" class="panel">
+        <input type="hidden" asp-for="Id" />
+        <div class="field-row">
+            <div class="field"><label asp-for="Name"></label><input asp-for="Name" /><span asp-validation-for="Name" class="field-error"></span></div>
+            <div class="field"><label asp-for="Priority"></label><input asp-for="Priority" type="number" /></div>
+        </div>
+        <fieldset>
+            <legend>Applies to (leave empty for all)</legend>
+            <div class="field-row">
+                <div class="field"><label asp-for="SupplierId"></label><select asp-for="SupplierId"><option value="">Any supplier</option>@foreach (var o in suppliers) { <option value="@o.Value">@o.Label</option> }</select></div>
+                <div class="field"><label asp-for="BrandId"></label><select asp-for="BrandId"><option value="">Any brand</option>@foreach (var o in brands) { <option value="@o.Value">@o.Label</option> }</select></div>
+            </div>
+            <div class="field"><label asp-for="CategoryId"></label><select asp-for="CategoryId"><option value="">Any category</option>@foreach (var o in categories) { <option value="@o.Value">@o.Label</option> }</select><span class="hint">Includes its subcategories.</span></div>
+        </fieldset>
+        <div class="field-row">
+            <div class="field"><label asp-for="MarkupPercent"></label><input asp-for="MarkupPercent" type="number" step="0.01" /></div>
+            <div class="field"><label asp-for="FixedMarkup"></label><input asp-for="FixedMarkup" type="number" step="0.01" /></div>
+            <div class="field"><label asp-for="MinMargin"></label><input asp-for="MinMargin" type="number" step="0.01" min="0" /></div>
+        </div>
+        <div class="field"><label asp-for="Rounding"></label><select asp-for="Rounding" asp-items="Html.GetEnumSelectList<PriceRounding>()"></select><span class="hint">Always rounds up: Ends99 → 149.99, Ends9 → 149, UpTo10 → 150.</span></div>
+        <label class="check"><input asp-for="IsActive" /> Active</label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save rule</button></div>
+    </form>
+    @if (Model.Id != 0)
+    {
+        <div class="side-col">
+            <form method="post" asp-action="DeleteRule" asp-route-id="@Model.Id" class="panel danger" data-confirm="Delete this rule? Prices will be recalculated.">
+                <button class="btn btn-danger" type="submit">Delete rule</button>
+            </form>
+        </div>
+    }
+</div>

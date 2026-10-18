@@ -1,0 +1,25 @@
+@model List<Supplier>
+@{
+    ViewData["Title"] = "Suppliers";
+    var counts = (Dictionary<int, int>)ViewBag.OfferCounts;
+}
+<div class="page-head">
+    <h1>Suppliers</h1>
+    <a class="btn btn-primary" asp-action="Edit">New supplier</a>
+</div>
+<table class="table">
+    <thead><tr><th>Supplier</th><th>Type</th><th>Currency</th><th class="num">Delivery days</th><th class="num">Extra cost</th><th class="num">Offers</th></tr></thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td><a asp-action="Edit" asp-route-id="@s.Id"><strong>@s.Name</strong></a> <span class="muted small">@s.Code @(s.IsActive ? "" : "· inactive")</span></td>
+                <td>@s.Kind</td>
+                <td>@s.Currency</td>
+                <td class="num">@s.DefaultLeadTimeDays</td>
+                <td class="num">@s.ExtraCostPercent.ToString("0.##")% + @s.ExtraCostFixed.ToString("0.##")</td>
+                <td class="num"><a asp-controller="Offers" asp-action="Index" asp-route-supplierId="@s.Id">@counts.GetValueOrDefault(s.Id)</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

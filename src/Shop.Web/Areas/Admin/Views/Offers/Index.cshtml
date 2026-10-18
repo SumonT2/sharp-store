@@ -1,0 +1,46 @@
+@model List<SupplierOffer>
+@{
+    ViewData["Title"] = "Supplier offers";
+    var suppliers = (List<Supplier>)ViewBag.Suppliers;
+    var show = ViewBag.Show as string;
+    var shows = new[] { ("", "All"), ("expiring", "Ending in 3 days"), ("expired", "Expired"), ("errors", "Scrape errors"), ("inactive", "Inactive") };
+}
+<div class="page-head">
+    <h1>Supplier offers <span class="muted">(@ViewBag.Total)</span></h1>
+    <a class="btn btn-primary" asp-action="Edit">New offer</a>
+</div>
+<form method="get" class="toolbar">
+    <input type="search" name="q" value="@ViewBag.Q" placeholder="SKU, name or supplier SKU" />
+    <select name="supplierId" data-autosubmit>
+        <option value="">All suppliers</option>
+        @foreach (var s in suppliers)
+        {
+            <option value="@s.Id" selected="@(s.Id == (int?)ViewBag.SupplierId)">@s.Name</option>
+        }
+    </select>
+    <select name="show" data-autosubmit>
+        @foreach (var (value, label) in shows)
+        {
+            <option value="@value" selected="@(value == (show ?? ""))">@label</option>
+        }
+    </select>
+    <button class="btn" type="submit">Filter</button>
+</form>
+<table class="table">
+    <thead><tr><th>Product</th><th>Supplier</th><th class="num">Cost</th><th class="num">Stock</th><th class="num">Days</th><th>Valid</th><th>Updated</th></tr></thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
+            <tr class="@(o.IsActive ? null : "is-muted")">
+                <td><a asp-action="Edit" asp-route-id="@o.Id"><strong>@o.Product!.Name</strong></a><div class="small muted">@o.Product!.Sku @(o.SupplierSku is null ? "" : "· " + o.SupplierSku)</div></td>
+                <td>@o.Supplier!.Code</td>
+                <td class="num">@o.Cost.ToString("0.##") @o.EffectiveCurrency</td>
+                <td class="num">@(o.StockQuantity?.ToString() ?? "∞")</td>
+                <td class="num">@o.EffectiveLeadTimeDays</td>
+                <td class="small">@(o.ValidFrom is null && o.ValidTo is null ? "always" : $"{Fmt.Date(o.ValidFrom)} → {Fmt.Date(o.ValidTo)}")</td>
+                <td class="small muted">@Fmt.DateTime(o.UpdatedAt)@if (o.LastScrapeError is not null) { <div class="problem">@o.LastScrapeError</div> }</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<partial name="_Pager" model="(int)ViewBag.Page" view-data="ViewData" />

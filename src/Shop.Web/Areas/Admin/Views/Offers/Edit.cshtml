@@ -1,0 +1,63 @@
+@model OfferEditInput
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New offer" : "Edit offer";
+    var suppliers = (List<Supplier>)ViewBag.Suppliers;
+    var offer = ViewBag.Offer as SupplierOffer;
+}
+<a class="small" asp-action="Index">← Offers</a>
+<h1>@ViewData["Title"]</h1>
+<div class="admin-grid admin-grid-wide">
+    <form method="post" asp-action="Edit" class="panel">
+        <input type="hidden" asp-for="Id" />
+        <div class="field-row">
+            <div class="field"><label asp-for="ProductSku"></label><input asp-for="ProductSku" /><span asp-validation-for="ProductSku" class="field-error"></span></div>
+            <div class="field">
+                <label asp-for="SupplierId"></label>
+                <select asp-for="SupplierId">
+                    <option value="0">Choose…</option>
+                    @foreach (var s in suppliers) { <option value="@s.Id">@s.Name (@s.Code, @s.Currency, @s.DefaultLeadTimeDays days)</option> }
+                </select>
+                <span asp-validation-for="SupplierId" class="field-error"></span>
+            </div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label asp-for="SupplierSku"></label><input asp-for="SupplierSku" /></div>
+            <div class="field"><label asp-for="Cost"></label><input asp-for="Cost" type="number" step="0.0001" min="0" /><span asp-validation-for="Cost" class="field-error"></span></div>
+            <div class="field"><label asp-for="Currency"></label><input asp-for="Currency" maxlength="3" /><span asp-validation-for="Currency" class="field-error"></span></div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label asp-for="StockQuantity"></label><input asp-for="StockQuantity" type="number" min="0" /></div>
+            <div class="field"><label asp-for="LeadTimeDays"></label><input asp-for="LeadTimeDays" type="number" min="0" /></div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label asp-for="ValidFrom"></label><input asp-for="ValidFrom" type="datetime-local" /></div>
+            <div class="field"><label asp-for="ValidTo"></label><input asp-for="ValidTo" type="datetime-local" /><span asp-validation-for="ValidTo" class="field-error"></span></div>
+        </div>
+        <p class="hint">Times are in shop time (@Fmt.Clock.Zone.Id). Leave both empty for an offer that is always valid. Outside the window the offer is ignored and the next best offer is used.</p>
+        <div class="field"><label asp-for="SourceUrl"></label><input asp-for="SourceUrl" type="url" /><span asp-validation-for="SourceUrl" class="field-error"></span></div>
+        <label class="check"><input asp-for="IsActive" /> Active</label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save offer</button></div>
+    </form>
+    @if (offer is not null)
+    {
+        <div class="side-col">
+            <section class="panel">
+                <h2>Product</h2>
+                <p><a asp-controller="Products" asp-action="Edit" asp-route-id="@offer.ProductId">@offer.Product!.Name</a></p>
+                <p class="small muted">Updated @Fmt.DateTime(offer.UpdatedAt)</p>
+            </section>
+            @if (offer.SourceUrl is not null)
+            {
+                <form method="post" asp-action="TestScrape" asp-route-id="@offer.Id" class="panel">
+                    <h2>Scraping</h2>
+                    <p class="small muted">Last checked @Fmt.DateTime(offer.LastScrapedAt)</p>
+                    @if (offer.LastScrapeError is not null) { <p class="small problem">@offer.LastScrapeError</p> }
+                    <button class="btn" type="submit">Test price reading</button>
+                </form>
+            }
+            <form method="post" asp-action="Delete" asp-route-id="@offer.Id" class="panel danger" data-confirm="Delete this offer?">
+                <button class="btn btn-danger" type="submit">Delete offer</button>
+            </form>
+        </div>
+    }
+</div>

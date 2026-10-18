@@ -1,0 +1,60 @@
+@model SupplierEditInput
+@{
+    ViewData["Title"] = Model.Id == 0 ? "New supplier" : Model.Name;
+}
+<a class="small" asp-action="Index">← Suppliers</a>
+<h1>@ViewData["Title"]</h1>
+<div class="admin-grid admin-grid-wide">
+    <form method="post" class="panel">
+        <input type="hidden" asp-for="Id" />
+        <div class="field-row">
+            <div class="field"><label asp-for="Name"></label><input asp-for="Name" /><span asp-validation-for="Name" class="field-error"></span></div>
+            <div class="field"><label asp-for="Code"></label><input asp-for="Code" placeholder="e.g. CN" /><span asp-validation-for="Code" class="field-error"></span></div>
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="Kind">Type</label>
+                <select asp-for="Kind" asp-items="Html.GetEnumSelectList<SupplierKind>()"></select>
+            </div>
+            <div class="field"><label asp-for="Currency"></label><input asp-for="Currency" maxlength="3" /><span asp-validation-for="Currency" class="field-error"></span></div>
+            <div class="field"><label asp-for="DefaultLeadTimeDays"></label><input asp-for="DefaultLeadTimeDays" type="number" min="0" /></div>
+        </div>
+        <div class="field-row">
+            <div class="field"><label asp-for="ExtraCostPercent"></label><input asp-for="ExtraCostPercent" type="number" step="0.01" min="0" /><span class="hint">Shipping, customs, etc. as % of cost.</span></div>
+            <div class="field"><label asp-for="ExtraCostFixed"></label><input asp-for="ExtraCostFixed" type="number" step="0.01" min="0" /><span class="hint">In @Fmt.Shop.BaseCurrency per unit.</span></div>
+        </div>
+        <div class="field"><label asp-for="Notes"></label><textarea asp-for="Notes" rows="2"></textarea></div>
+        <div class="field">
+            <label asp-for="ImportColumnMap"></label>
+            <textarea asp-for="ImportColumnMap" rows="3" class="mono" placeholder="supplier_sku=Item Code&#10;cost=Dealer Price&#10;stock=Qty"></textarea>
+            <span class="hint">Only needed if this supplier's CSV uses different column names. Format: <code>standard_field=Their Column</code>, one per line.</span>
+        </div>
+        <fieldset>
+            <legend>Price scraping (web-source suppliers)</legend>
+            <p class="small muted">Only scrape sites whose terms allow it or where the owner has agreed. Only the price and stock status are read. Leave the price selector empty to use the page's structured product data.</p>
+            <div class="field"><label asp-for="ScrapePriceSelector"></label><input asp-for="ScrapePriceSelector" class="mono" placeholder=".product-price .amount" /></div>
+            <div class="field-row">
+                <div class="field"><label asp-for="ScrapeStockSelector"></label><input asp-for="ScrapeStockSelector" class="mono" placeholder=".stock-status" /></div>
+                <div class="field"><label asp-for="ScrapeInStockPattern"></label><input asp-for="ScrapeInStockPattern" class="mono" placeholder="in stock|available" /></div>
+            </div>
+            <div class="field"><label asp-for="ScrapeDelaySeconds"></label><input asp-for="ScrapeDelaySeconds" type="number" min="1" /></div>
+        </fieldset>
+        <label class="check"><input asp-for="IsActive" /> Active</label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+    @if (Model.Id != 0)
+    {
+        <div class="side-col">
+            <section class="panel">
+                <h2>Offers</h2>
+                <p><a asp-controller="Offers" asp-action="Index" asp-route-supplierId="@Model.Id">See this supplier's offers</a></p>
+                <p><a asp-controller="Import" asp-action="Index">Import a stock &amp; price CSV</a></p>
+            </section>
+            <form method="post" asp-action="Delete" asp-route-id="@Model.Id" class="panel danger" data-confirm="Delete this supplier and all of its offers?">
+                <h2>Delete</h2>
+                <p class="small muted">Removes all of this supplier's offers. Prefer setting it inactive.</p>
+                <button class="btn btn-danger" type="submit">Delete supplier</button>
+            </form>
+        </div>
+    }
+</div>

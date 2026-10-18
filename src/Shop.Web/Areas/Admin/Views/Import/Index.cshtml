@@ -1,0 +1,79 @@
+@model List<ImportLog>
+@{
+    ViewData["Title"] = "CSV import";
+    var suppliers = (List<Supplier>)ViewBag.Suppliers;
+}
+<h1>CSV import</h1>
+
+<div class="admin-grid">
+    <form method="post" asp-action="Offers" enctype="multipart/form-data" class="panel">
+        <h2>Stock &amp; prices from a supplier</h2>
+        <p class="muted small">Updates cost, stock, delivery days and offer dates for one supplier. Selling prices are recalculated right after.</p>
+        <div class="field">
+            <label for="supplierId">Supplier</label>
+            <select id="supplierId" name="supplierId" required>
+                <option value="">Choose…</option>
+                @foreach (var s in suppliers)
+                {
+                    <option value="@s.Id">@s.Name (@s.Code)</option>
+                }
+            </select>
+            @if (suppliers.Count == 0) { <span class="hint"><a asp-controller="Suppliers" asp-action="Edit">Add a supplier</a> first.</span> }
+        </div>
+        <div class="field"><label for="offers-file">CSV file</label><input id="offers-file" type="file" name="file" accept=".csv,text/csv" required /></div>
+        <label class="check"><input type="checkbox" name="markMissingOutOfStock" value="true" /> This is the supplier's full list — set items not in the file to stock 0</label>
+        <label class="check"><input type="checkbox" name="createMissingProducts" value="true" /> Create draft products for unknown SKUs (needs a name column)</label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Import stock &amp; prices</button><a asp-action="Template" asp-route-kind="offers">Download template</a></div>
+        <details class="help">
+            <summary>Columns</summary>
+            <ul class="small">
+                <li><code>sku</code> (your SKU) or <code>supplier_sku</code> — to find the product</li>
+                <li><code>cost</code> — supplier price; <code>currency</code> — e.g. CNY (default: supplier currency)</li>
+                <li><code>stock</code> — a number, or <code>*</code> for not tracked / unlimited</li>
+                <li><code>lead_time_days</code> — delivery days (default: supplier setting)</li>
+                <li><code>valid_from</code>, <code>valid_to</code> — offer window, <code>yyyy-MM-dd</code> or <code>yyyy-MM-dd HH:mm</code> in shop time (@Fmt.Clock.Zone.Id). A date-only end date includes the whole day.</li>
+                <li><code>source_url</code> — page to read the price from (web-source suppliers)</li>
+                <li>Empty cell = keep current value; <code>-</code> = clear it. Different column names can be mapped on the supplier.</li>
+            </ul>
+        </details>
+    </form>
+
+    <form method="post" asp-action="Catalog" enctype="multipart/form-data" class="panel">
+        <h2>Catalog (products &amp; specifications)</h2>
+        <p class="muted small">Creates or updates products by SKU: names, categories, brands, descriptions and specifications.</p>
+        <div class="field"><label for="catalog-file">CSV file</label><input id="catalog-file" type="file" name="file" accept=".csv,text/csv" required /></div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Import catalog</button><a asp-action="Template" asp-route-kind="catalog">Download template</a></div>
+        <details class="help">
+            <summary>Columns</summary>
+            <ul class="small">
+                <li><code>sku</code> (required), <code>name</code> (required for new products)</li>
+                <li><code>category</code> — path like <code>Phones &gt; Smartphones</code>; <code>brand</code></li>
+                <li><code>short_description</code>, <code>description</code>, <code>image_url</code>, <code>published</code> (yes/no)</li>
+                <li><code>price_override</code> — fixed price; <code>compare_at_price</code> — "was" price</li>
+                <li><code>spec:Group &gt; Name [unit]</code> — one column per specification, e.g. <code>spec:Display &gt; Screen Size [inch]</code></li>
+                <li>Empty cell = keep current value; <code>-</code> = clear it.</li>
+            </ul>
+        </details>
+    </form>
+</div>
+
+<section class="panel">
+    <h2>Recent imports</h2>
+    <table class="table">
+        <thead><tr><th>When</th><th>File</th><th>Type</th><th class="num">Rows</th><th class="num">New</th><th class="num">Updated</th><th class="num">Failed</th></tr></thead>
+        <tbody>
+            @foreach (var l in Model)
+            {
+                <tr>
+                    <td class="small">@Fmt.DateTime(l.StartedAt)</td>
+                    <td><a asp-action="Log" asp-route-id="@l.Id">@l.FileName</a></td>
+                    <td>@(l.Kind == ImportKind.Catalog ? "Catalog" : $"Offers · {l.Supplier?.Code}")</td>
+                    <td class="num">@l.TotalRows</td>
+                    <td class="num">@l.Created</td>
+                    <td class="num">@l.Updated</td>
+                    <td class="num @(l.Failed > 0 ? "problem" : null)">@l.Failed</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

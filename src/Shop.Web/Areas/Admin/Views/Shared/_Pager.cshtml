@@ -1,0 +1,18 @@
+@model int
+@{
+    var pageCount = (int)(ViewData["PageCount"] ?? 1);
+    var query = Context.Request.Query.Where(q => q.Key != "page").ToDictionary(q => q.Key, q => q.Value.ToString());
+    string Link(int page)
+    {
+        var copy = new Dictionary<string, string?>(query.Select(kv => new KeyValuePair<string, string?>(kv.Key, kv.Value))) { ["page"] = page.ToString() };
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(Context.Request.Path, copy);
+    }
+}
+@if (pageCount > 1)
+{
+    <nav class="pagination" aria-label="Pages">
+        @if (Model > 1) { <a href="@Link(Model - 1)">Previous</a> }
+        <span aria-current="page">@Model / @pageCount</span>
+        @if (Model < pageCount) { <a href="@Link(Model + 1)">Next</a> }
+    </nav>
+}

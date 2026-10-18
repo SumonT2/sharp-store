@@ -1,0 +1,30 @@
+@model Order
+@{
+    ViewData["Title"] = "Order placed";
+}
+
+<div class="confirmation">
+    <div class="confirmation-icon"><partial name="_Icon" model='"check"' /></div>
+    <h1>Thank you, @Model.CustomerName!</h1>
+    <p class="lead">Your order <strong>#@Model.Number</strong> has been placed. We'll call you on @Model.Phone to confirm.</p>
+
+    <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Estimated delivery</th><th class="num">Total</th></tr></thead>
+        <tbody>
+            @foreach (var i in Model.Items)
+            {
+                <tr>
+                    <td>@i.Name @if (i.Availability == Availability.PreOrder) { <span class="badge badge-pre">Pre-order</span> }</td>
+                    <td>@i.Quantity</td>
+                    <td>@Fmt.Date(i.EstimatedDeliveryDate)</td>
+                    <td class="num">@Fmt.Money(i.LineTotal)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr><td colspan="3">Delivery</td><td class="num">@(Model.ShippingFee == 0 ? "Free" : Fmt.Money(Model.ShippingFee))</td></tr>
+            <tr class="total"><td colspan="3">Total (cash on delivery)</td><td class="num">@Fmt.Money(Model.Total)</td></tr>
+        </tfoot>
+    </table>
+    <a class="btn btn-primary" href="/">Continue shopping</a>
+</div>

@@ -1,0 +1,17 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = Model.StatusCode == 404 ? "Page not found" : "Something went wrong";
+}
+<div class="empty">
+    <h1>@ViewData["Title"]</h1>
+    @if (Model.StatusCode == 404)
+    {
+        <p>The page you're looking for doesn't exist or has moved.</p>
+    }
+    else
+    {
+        <p>Sorry, an error occurred. Please try again in a moment.</p>
+        <p class="muted small">Reference: @Model.RequestId</p>
+    }
+    <a class="btn btn-primary" href="/">Go to the home page</a>
+</div>

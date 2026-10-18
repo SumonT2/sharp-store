@@ -1,0 +1,84 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<h1>Dashboard</h1>
+
+<div class="stats">
+    <a class="stat" href="/admin/orders?status=Pending"><span>Pending orders</span><strong>@Model.PendingOrders</strong></a>
+    <div class="stat"><span>Sales, last 30 days</span><strong>@Fmt.Money(Model.SalesLast30Days)</strong></div>
+    <a class="stat" href="/admin/products?status=in-stock"><span>In stock</span><strong>@Model.InStock</strong></a>
+    <a class="stat" href="/admin/products?status=pre-order"><span>Pre-order</span><strong>@Model.PreOrder</strong></a>
+    <a class="stat" href="/admin/products?status=out-of-stock"><span>Out of stock</span><strong>@Model.OutOfStock</strong></a>
+    <a class="stat" href="/admin/products?status=draft"><span>Drafts</span><strong>@Model.Drafts</strong></a>
+</div>
+
+<div class="admin-grid">
+    <section class="panel">
+        <div class="panel-head"><h2>Recent orders</h2><a href="/admin/orders">All orders</a></div>
+        @if (Model.RecentOrders.Count == 0)
+        {
+            <p class="muted">No orders yet.</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="num">Total</th></tr></thead>
+                <tbody>
+                    @foreach (var o in Model.RecentOrders)
+                    {
+                        <tr>
+                            <td><a asp-controller="Orders" asp-action="Details" asp-route-id="@o.Id">#@o.Number</a><div class="small muted">@Fmt.DateTime(o.CreatedAt)</div></td>
+                            <td>@o.CustomerName<div class="small muted">@o.Phone</div></td>
+                            <td><span class="status status-@o.Status.ToString().ToLower()">@o.Status</span></td>
+                            <td class="num">@Fmt.Money(o.Total)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="panel">
+        <div class="panel-head"><h2>Offers ending within 3 days</h2><a href="/admin/offers?show=expiring">All</a></div>
+        @if (Model.ExpiringOffers.Count == 0)
+        {
+            <p class="muted">None.</p>
+        }
+        else
+        {
+            <ul class="plain-list">
+                @foreach (var o in Model.ExpiringOffers)
+                {
+                    <li><a asp-controller="Products" asp-action="Edit" asp-route-id="@o.ProductId">@o.Product!.Name</a> · @o.Supplier!.Code <span class="muted">ends @Fmt.DateTime(o.ValidTo)</span></li>
+                }
+            </ul>
+        }
+
+        <div class="panel-head"><h2>Recent imports</h2><a href="/admin/import">Import</a></div>
+        @if (Model.RecentImports.Count == 0)
+        {
+            <p class="muted">No imports yet.</p>
+        }
+        else
+        {
+            <ul class="plain-list">
+                @foreach (var l in Model.RecentImports)
+                {
+                    <li><a asp-controller="Import" asp-action="Log" asp-route-id="@l.Id">@l.FileName</a> <span class="muted">· @(l.Supplier?.Code ?? "catalog") · @l.Created new, @l.Updated updated@(l.Failed > 0 ? $", {l.Failed} failed" : "")</span></li>
+                }
+            </ul>
+        }
+
+        @if (Model.ScrapeErrors.Count > 0)
+        {
+            <div class="panel-head"><h2>Scrape problems</h2><a href="/admin/offers?show=errors">All</a></div>
+            <ul class="plain-list">
+                @foreach (var o in Model.ScrapeErrors)
+                {
+                    <li><a asp-controller="Offers" asp-action="Edit" asp-route-id="@o.Id">@o.Product!.Name</a> <span class="muted">· @o.LastScrapeError</span></li>
+                }
+            </ul>
+        }
+    </section>
+</div>
