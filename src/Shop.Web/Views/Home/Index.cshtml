@@ -10,6 +10,15 @@
     var hasSide = hasDeals || Model.Promo is not null;
     var dealsLeft = Model.DealsEndAt is { } end ? end - Fmt.Clock.UtcNow : (TimeSpan?)null;
 
+    // The stylesheet picks the light or the dark picture to match the theme.
+    string? HeroImages()
+    {
+        var css = new List<string>();
+        if (!string.IsNullOrWhiteSpace(hero.ImageUrl)) css.Add($"--hero-light: url('{hero.ImageUrl}')");
+        if (!string.IsNullOrWhiteSpace(hero.DarkImageUrl)) css.Add($"--hero-dark: url('{hero.DarkImageUrl}')");
+        return css.Count == 0 ? null : string.Join("; ", css);
+    }
+
     static string IconFor(string slug) =>
         slug.Contains("keyboard") ? "keyboard"
         : slug.Contains("mice") || slug.Contains("mouse") ? "mouse"
@@ -21,7 +30,7 @@
 
 <div class="home">
     <section class="home-top @(hasSide ? null : "is-single")" aria-label="Promotions">
-        <div class="hero" style="@(string.IsNullOrWhiteSpace(hero.ImageUrl) ? null : $"background-image: url('{hero.ImageUrl}')")">
+        <div class="hero" style="@HeroImages()">
             @if (!string.IsNullOrWhiteSpace(hero.Eyebrow))
             {
                 <p class="eyebrow">@hero.Eyebrow</p>

@@ -10,6 +10,15 @@
             </div>
         </fieldset>
         <fieldset class="seg">
+            <legend>Accent colour</legend>
+            <div class="swatches">
+                @foreach (var a in AccentColors.All)
+                {
+                    <label style="--swatch: @a.Hex" title="@a.Name"><input type="radio" name="pref-accent" value="@a.Key" data-pref="accent" /><span class="sr-only">@a.Name</span></label>
+                }
+            </div>
+        </fieldset>
+        <fieldset class="seg">
             <legend>Theme</legend>
             <div class="seg-options">
                 <label><input type="radio" name="pref-theme" value="system" data-pref="theme" checked /> System</label>

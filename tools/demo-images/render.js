@@ -179,6 +179,12 @@ jobs.push(['hero', `<style>${css}</style><div class="stage" id="s" style="width:
   <div style="position:absolute;right:70px;top:430px">${mouseSVG({ ...mice['mouse-g1'], w: 210, rot: -18 })}</div>
   <div style="position:absolute;right:420px;top:120px;width:520px;height:220px;background:radial-gradient(50% 50%,rgba(255,90,31,.35),transparent 70%);filter:blur(30px)"></div></div>`]);
 
+// Light hero for the light theme: the same desk scene on warm paper, without the dark backdrop.
+jobs.push(['hero-light', `<style>${css}</style><div class="stage" id="s" style="width:1680px;height:840px;background:radial-gradient(70% 90% at 70% 55%,#FFFFFF 0%,#F6F3EE 50%,#EEEAE3 100%);justify-content:flex-end">
+  <div style="position:absolute;right:-260px;top:340px;width:1000px;height:540px;border-radius:40px;background:linear-gradient(180deg,#E7E3DB,#DDD8CE);transform:perspective(1800px) rotateX(58deg) rotateZ(-10deg);box-shadow:0 30px 60px rgba(60,50,40,.12)"></div>
+  <div style="position:absolute;right:170px;top:230px">${tilt(keyboardHTML(kbs['kb-k68']), { rx: 50, rz: -12 }, 0.98)}</div>
+  <div style="position:absolute;right:30px;top:440px">${mouseSVG({ ...mice['mouse-g3'], w: 180, rot: -18 })}</div></div>`]);
+
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1700, height: 1000 } });
@@ -186,7 +192,7 @@ jobs.push(['hero', `<style>${css}</style><div class="stage" id="s" style="width:
     await page.setContent(`<!doctype html><html><body>${html}</body></html>`);
     const png = `${OUT}/${name}.png`;
     await page.locator('#s').screenshot({ path: png });
-    const size = name === 'hero' ? '1680x840' : '800x800';
+    const size = name.startsWith('hero') ? '1680x840' : '800x800';
     execFileSync('convert', [png, '-resize', size, '-quality', '80', `${OUT}/${name}.webp`]);
     fs.unlinkSync(png);
   }

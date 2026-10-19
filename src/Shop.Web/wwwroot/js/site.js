@@ -97,14 +97,15 @@
         document.querySelectorAll("[data-order-total]").forEach(function (el) { el.textContent = radio.dataset.totalText; });
     });
 
-    // Display settings (layout density and theme), remembered in this browser only.
-    var prefDefaults = { density: "comfortable", theme: "system" };
+    // Display settings (layout density, accent colour and theme), remembered in this browser only.
+    var prefDefaults = { density: "comfortable", theme: "system", accent: document.documentElement.getAttribute("data-accent-default") || "" };
     function readPref(name) {
         try { return localStorage.getItem("pref-" + name) || prefDefaults[name]; } catch (e) { return prefDefaults[name]; }
     }
     function applyPref(name, value) {
-        var attr = name === "theme" ? "data-theme" : "data-density";
-        if (value === prefDefaults[name]) document.documentElement.removeAttribute(attr);
+        var attr = "data-" + name;
+        // The accent attribute is always set (the shop's default colour is one of the choices).
+        if (value === prefDefaults[name] && name !== "accent") document.documentElement.removeAttribute(attr);
         else document.documentElement.setAttribute(attr, value);
         try {
             if (value === prefDefaults[name]) localStorage.removeItem("pref-" + name);

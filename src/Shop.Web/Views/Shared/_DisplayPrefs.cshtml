@@ -1,10 +1,18 @@
+@{
+    var defaultAccent = AccentColors.Default(Fmt.Shop.Accent).Key;
+}
+<style>@foreach (var a in AccentColors.All){<text>:root[data-accent="@a.Key"]{--accent:@a.Hex}</text>}</style>
 @* Applies the visitor's saved display settings before the page is drawn, so there is no flash. *@
 <script>
     (function () {
+        var d = document.documentElement;
+        d.setAttribute("data-accent-default", "@defaultAccent");
+        d.setAttribute("data-accent", "@defaultAccent");
         try {
-            var d = document.documentElement, t = localStorage.getItem("pref-theme"), n = localStorage.getItem("pref-density");
+            var t = localStorage.getItem("pref-theme"), n = localStorage.getItem("pref-density"), a = localStorage.getItem("pref-accent");
             if (t === "light" || t === "dark") d.setAttribute("data-theme", t);
             if (n === "compact") d.setAttribute("data-density", n);
+            if (a && /^[a-z]+$/.test(a)) d.setAttribute("data-accent", a);
         } catch (e) { /* storage unavailable: use defaults */ }
     })();
 </script>

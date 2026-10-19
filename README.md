@@ -49,7 +49,8 @@ Run tests with `dotnet test`.
 | `Shop:DeliveryZones`, `Shop:FreeShippingOver` | Delivery areas with fees (inside Dhaka ৳70, outside ৳130) and the free-delivery threshold |
 | `Shop:PhonePattern`, `Shop:PhoneHint` | Phone number check at checkout (Bangladeshi mobile numbers) |
 | `Shop:Hotline`, `Shop:SupportHours`, `Shop:Address` | Shown in the top bar, footer and on phones as a call button; leave empty to hide |
-| `Shop:Hero` | Home page banner: `Eyebrow`, `Title` (`\n` for a new line), `Text`, `ImageUrl` (wide, subject on the right), `Url`, `LinkText`, or `ProductSku` to advertise one product with its live price |
+| `Shop:Accent` | Default accent colour: `terracotta`, `sage`, `slate`, `teal`, `plum`, `ochre` or `rose`. Visitors can pick their own in the display settings (the half-circle icon) |
+| `Shop:Hero` | Home page banner: `Eyebrow`, `Title` (`\n` for a new line), `Text`, `ImageUrl` (wide, subject on the right; a light picture), optional `DarkImageUrl` for the dark theme, `Url`, `LinkText`, or `ProductSku` to advertise one product with its live price |
 | `Shop:Promo` | Optional small banner beside the hero (`Eyebrow`, `Title`, `Url`, `LinkText`); the other one advertises pre-order deals automatically |
 | `Admin:Email`, `Admin:Password` | Creates the first admin when none exists |
 | `Jobs:RepriceIntervalMinutes` | How often prices are recalculated (so offer windows open and close on time) |
