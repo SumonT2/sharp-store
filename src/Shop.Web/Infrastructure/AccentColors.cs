@@ -1,7 +1,7 @@
 namespace Shop.Web.Infrastructure;
 
 /// <summary>
-/// Muted accent colours visitors can pick in the display settings. Each one is a single mid-tone; the stylesheet mixes
+/// Accent colours visitors can pick in the display settings. Each one is a single mid-tone; the stylesheet mixes
 /// the light fills, outlines and text shades from it, so they work in the light and the dark theme.
 /// </summary>
 public static class AccentColors
@@ -10,13 +10,13 @@ public static class AccentColors
 
     public static readonly IReadOnlyList<Accent> All =
     [
-        new("terracotta", "Terracotta", "#c0714a"),
-        new("sage", "Sage", "#6f8f6b"),
-        new("slate", "Slate blue", "#5e7ea6"),
-        new("teal", "Teal", "#4c8a88"),
-        new("plum", "Plum", "#8b6f9e"),
-        new("ochre", "Ochre", "#ad8a44"),
-        new("rose", "Rose", "#b86b7a"),
+        new("coral", "Coral", "#e2643f"),
+        new("emerald", "Emerald", "#1f9d6a"),
+        new("ocean", "Ocean blue", "#2f7fd6"),
+        new("teal", "Teal", "#139a97"),
+        new("violet", "Violet", "#7b5ce0"),
+        new("amber", "Amber", "#d9930f"),
+        new("raspberry", "Raspberry", "#d6457a"),
     ];
 
     /// <summary>The configured default (Shop:Accent), or the first colour when it isn't one of the list.</summary>

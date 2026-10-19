@@ -15,20 +15,21 @@
     --border-strong: #d6d3ca;
     --ink: #2b2d33;            /* strong text on light fills */
     /* Accent: one muted colour, chosen per visitor (data-accent on <html>); every shade below is mixed from it. */
-    --accent: #c0714a;
-    --accent-soft: color-mix(in oklab, var(--accent) 11%, var(--surface));   /* button fills */
-    --accent-soft-2: color-mix(in oklab, var(--accent) 19%, var(--surface)); /* stronger fills, hover */
-    --accent-line: color-mix(in oklab, var(--accent) 40%, var(--surface));   /* thick outlines */
-    --accent-strong: color-mix(in oklab, var(--accent) 70%, var(--text));    /* text and icons on fills */
+    --accent: #e2643f;
+    --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));   /* button fills */
+    --accent-soft-2: color-mix(in oklab, var(--accent) 24%, var(--surface)); /* stronger fills, hover */
+    --accent-soft-3: color-mix(in oklab, var(--accent) 34%, var(--surface)); /* the main call to action */
+    --accent-line: color-mix(in oklab, var(--accent) 58%, var(--surface));   /* thick outlines */
+    --accent-strong: color-mix(in oklab, var(--accent) 66%, var(--text));    /* text and icons on fills */
     --accent-text: var(--accent-strong);
     --primary: var(--accent-strong); /* used by the admin stylesheet */
     --primary-hover: var(--accent);
     --primary-soft: var(--accent-soft);
     /* Bands (top bar, home banner, deals, footer): light tints in the light theme, dark in the dark theme. */
-    --band: color-mix(in oklab, var(--accent) 7%, var(--surface));
+    --band: color-mix(in oklab, var(--accent) 10%, var(--surface));
     --band-2: var(--surface);
     --band-3: var(--surface);
-    --band-line: color-mix(in oklab, var(--accent) 18%, var(--surface));
+    --band-line: color-mix(in oklab, var(--accent) 26%, var(--surface));
     --band-text: var(--text);
     --band-muted: var(--muted);
     --footer: #ebe9e3;
@@ -62,8 +63,8 @@
         --bg: #0f1013; --surface: #17181c; --surface-2: #202227; --surface-3: #2a2c32; --photo: #e9e7e1;
         --text: #f1f0ec; --text-2: #cac9c3; --muted: #918f97; --border: #2a2c31; --border-strong: #3a3c42;
         --ink: #f1f0ec;
-        --accent-soft: color-mix(in oklab, var(--accent) 16%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 26%, var(--surface));
-        --accent-line: color-mix(in oklab, var(--accent) 48%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 60%, var(--text));
+        --accent-soft: color-mix(in oklab, var(--accent) 18%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 28%, var(--surface)); --accent-soft-3: color-mix(in oklab, var(--accent) 38%, var(--surface));
+        --accent-line: color-mix(in oklab, var(--accent) 62%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 62%, var(--text));
         --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --footer: #131417;
         --ok: #6cc597; --ok-soft: #16271e; --pre: #e3a27e; --pre-soft: #33241b; --low: #e0b066; --out: #ff8f8f; --out-soft: #361818;
         --shadow: 0 1px 2px rgba(0, 0, 0, .4); --shadow-lg: 0 16px 40px rgba(0, 0, 0, .55);
@@ -74,8 +75,8 @@
     --bg: #0f1013; --surface: #17181c; --surface-2: #202227; --surface-3: #2a2c32; --photo: #e9e7e1;
     --text: #f1f0ec; --text-2: #cac9c3; --muted: #918f97; --border: #2a2c31; --border-strong: #3a3c42;
     --ink: #f1f0ec;
-    --accent-soft: color-mix(in oklab, var(--accent) 16%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 26%, var(--surface));
-    --accent-line: color-mix(in oklab, var(--accent) 48%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 60%, var(--text));
+    --accent-soft: color-mix(in oklab, var(--accent) 18%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 28%, var(--surface)); --accent-soft-3: color-mix(in oklab, var(--accent) 38%, var(--surface));
+    --accent-line: color-mix(in oklab, var(--accent) 62%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 62%, var(--text));
     --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --footer: #131417;
     --ok: #6cc597; --ok-soft: #16271e; --pre: #e3a27e; --pre-soft: #33241b; --low: #e0b066; --out: #ff8f8f; --out-soft: #361818;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4); --shadow-lg: 0 16px 40px rgba(0, 0, 0, .55);
@@ -182,8 +183,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn:active { transform: scale(.98); }
 .btn-primary, .btn-dark { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
 .btn-primary:hover, .btn-dark:hover { background: var(--accent-soft-2); border-color: var(--accent); color: var(--accent-strong); }
-.btn-accent { background: var(--accent-soft-2); border-color: var(--accent-line); color: var(--accent-strong); font-weight: 800; }
-.btn-accent:hover { border-color: var(--accent); color: var(--accent-strong); }
+.btn-accent { background: var(--accent-soft-3); border-color: var(--accent); color: var(--accent-strong); font-weight: 800; }
+.btn-accent:hover { background: var(--accent-soft-2); border-color: var(--accent); color: var(--accent-strong); }
 .btn-outline { background: transparent; border-color: var(--accent-line); color: var(--accent-strong); }
 .btn-outline:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); }
 .btn-light, .btn-on-dark { background: var(--surface); border-color: var(--border-strong); color: var(--text); }

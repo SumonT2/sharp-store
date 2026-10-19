@@ -28,8 +28,8 @@ public class ShopOptions
     public string? PhonePattern { get; set; } = @"^(?:\+?88)?01[3-9]\d{8}$";
     public string PhoneHint { get; set; } = "Bangladeshi mobile number, e.g. 01712-345678";
 
-    /// <summary>Default accent colour (terracotta, sage, slate, teal, plum, ochre or rose); visitors can pick another.</summary>
-    public string Accent { get; set; } = "terracotta";
+    /// <summary>Default accent colour (coral, emerald, ocean, teal, violet, amber or raspberry); visitors can pick another.</summary>
+    public string Accent { get; set; } = "coral";
 
     /// <summary>Customer phone line shown in the header and footer; hidden when empty.</summary>
     public string? Hotline { get; set; }
