@@ -92,8 +92,8 @@
     color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.hero-bg-sky, .hero-bg-mint, .hero-bg-peach, .hero-bg-lavender, .hero-bg-watercolor) { --b1: #141922; --b2: #171a21; --b3: #1c2230; } }
-:root[data-theme="dark"] :is(.hero-bg-sky, .hero-bg-mint, .hero-bg-peach, .hero-bg-lavender, .hero-bg-watercolor) { --b1: #141922; --b2: #171a21; --b3: #1c2230; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) :is(.bg-sky, .bg-mint, .bg-peach, .bg-lavender, .bg-watercolor) { --b1: #141922; --b2: #171a21; --b3: #1c2230; } }
+:root[data-theme="dark"] :is(.bg-sky, .bg-mint, .bg-peach, .bg-lavender, .bg-watercolor) { --b1: #141922; --b2: #171a21; --b3: #1c2230; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-photo { background-image: var(--hero-dark, var(--hero-light, none)); } }
 :root[data-theme="dark"] .hero-photo { background-image: var(--hero-dark, var(--hero-light, none)); }
 
@@ -279,41 +279,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .home-top.is-single { grid-template-columns: 1fr; }
 .hero { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 18px; padding: clamp(28px, 4vw, 48px); border-radius: var(--radius-lg); background-color: var(--band); background-image: var(--hero-light, none); background-repeat: no-repeat; background-position: right center; background-size: cover; color: var(--band-text); border: 1px solid var(--band-line); }
 .hero-photo::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--band) 92%, transparent) 0%, color-mix(in srgb, var(--band) 55%, transparent) 45%, transparent 70%); pointer-events: none; }
-.hero > :not(.hero-art, .hero-pattern) { position: relative; z-index: 1; }
+.hero > :not(.hero-art, .bg-pattern) { position: relative; z-index: 1; }
 
-/* Banner background presets (Shop:Hero:Background). Soft presets mix two coloured glows over a pale base;
-   in the dark theme the base turns dark and the glows stay. */
-.hero-bg { background: radial-gradient(55% 80% at 88% 15%, var(--g1), transparent 70%), radial-gradient(50% 75% at 5% 105%, var(--g2), transparent 70%), linear-gradient(120deg, var(--b1) 0%, var(--b2) 55%, var(--b3) 100%); border-color: transparent; }
-.hero-bg-accent { --g1: color-mix(in srgb, var(--accent) 34%, transparent); --g2: color-mix(in srgb, var(--accent) 20%, transparent); --b1: var(--accent-soft); --b2: var(--surface); --b3: var(--accent-soft-2); }
-.hero-bg-sky { --g1: #8fbaff99; --g2: #9fe6ff88; --b1: #eaf3ff; --b2: #f7fbff; --b3: #dbe9ff; }
-.hero-bg-mint { --g1: #8fe3c299; --g2: #b6ecff88; --b1: #e8f9f1; --b2: #f6fdf9; --b3: #d6f3e6; }
-.hero-bg-peach { --g1: #ffb98f99; --g2: #ffc4dc88; --b1: #fff1e8; --b2: #fffaf6; --b3: #ffe4d8; }
-.hero-bg-lavender { --g1: #b9a6ff99; --g2: #ffc6ec88; --b1: #f1edff; --b2: #fbfaff; --b3: #e6dcff; }
-.hero-bg-aurora { --g1: #7ef0d9aa; --g2: #9b7bffaa; --b1: #2f6fe0; --b2: #5a5be6; --b3: #12a99c; }
-.hero-bg-sunset { --g1: #ffd27a99; --g2: #ff6fa4aa; --b1: #ff8a5c; --b2: #f0608f; --b3: #8a5cf0; }
-.hero-bg-midnight { --g1: #2f7fd699; --g2: #7b5ce077; --b1: #0f1830; --b2: #141f3b; --b3: #1d2b52; }
-/* Presets with artwork (_HeroPattern): --p1 and --p2 colour the shapes. */
-.hero-pattern { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.hero-bg-waves { --g1: color-mix(in srgb, var(--accent) 18%, transparent); --g2: transparent; --b1: var(--accent-soft); --b2: var(--surface); --b3: var(--accent-soft-2); --p1: var(--accent); --p2: color-mix(in srgb, var(--accent) 22%, transparent); }
-.hero-bg-geometric { --g1: color-mix(in srgb, var(--accent) 22%, transparent); --g2: transparent; --b1: var(--surface); --b2: var(--accent-soft); --b3: var(--accent-soft-2); --p1: var(--accent); }
-.hero-bg-swoosh { --g1: transparent; --g2: transparent; --b1: var(--surface); --b2: var(--surface); --b3: var(--accent-soft); --p1: var(--accent); --p2: color-mix(in srgb, var(--accent) 30%, transparent); }
-.hero-bg-watercolor { --g1: transparent; --g2: transparent; --b1: #fffdf8; --b2: #ffffff; --b3: #f8fbf6; --p1: #f4a340; --p2: #2e9e6f; }
-.hero-bg-halftone { --g1: #fff4b0aa; --g2: transparent; --b1: #ffd84a; --b2: #ffe066; --b3: #ffd23a; --p1: #1f4fa3; --p2: #f2a900; }
-.hero-bg-streaks { --g1: #3d8bff33; --g2: #ff3d7f26; --b1: #0d1230; --b2: #161b40; --b3: #101531; --p1: #ff3d7f; --p2: #3d8bff; }
-.hero-bg-network { --g1: color-mix(in srgb, var(--accent) 30%, transparent); --g2: transparent; --b1: #060c1d; --b2: #0b1430; --b3: #0a1027; --p1: color-mix(in srgb, var(--accent) 75%, #fff); --p2: #d6457a; }
-.hero.hero-on-light, .hero.hero-on-light h1, .hero.hero-on-light p strong { color: #14161a; }
-.hero.hero-on-light p { color: #3d3a2c; }
-.hero.hero-on-light .eyebrow { color: #14161a; background: rgba(255, 255, 255, .6); box-shadow: inset 0 0 0 2px rgba(20, 22, 26, .14); }
-.hero.hero-on-light .btn-accent { background: rgba(255, 255, 255, .92); border-color: color-mix(in srgb, var(--p1) 45%, transparent); color: var(--p1); }
-.hero.hero-on-light .btn-on-dark { background: rgba(255, 255, 255, .45); border-color: rgba(20, 22, 26, .16); color: #14161a; }
 .hero-art { position: absolute; right: -2%; bottom: 5%; width: min(50%, 480px); height: auto; pointer-events: none; filter: drop-shadow(0 18px 24px rgba(20, 30, 50, .18)); }
-.hero.hero-on-color, .hero.hero-on-color h1, .hero.hero-on-color p strong { color: #fff; }
-.hero.hero-on-color p { color: rgba(255, 255, 255, .86); }
-.hero.hero-on-color .eyebrow { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .35); }
-.hero.hero-on-color .btn-accent { background: rgba(255, 255, 255, .94); border-color: rgba(255, 255, 255, .5); color: #14161a; }
-.hero.hero-on-color .btn-accent:hover { background: #fff; color: #14161a; }
-.hero.hero-on-color .btn-on-dark { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .45); color: #fff; }
-.hero.hero-on-color .btn-on-dark:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .7); color: #fff; }
 .hero .eyebrow { color: var(--accent-strong); background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent-line); padding: 5px 12px; border-radius: 999px; font-size: .72rem; }
 .hero h1 { margin: 0; font-size: clamp(2.2rem, 1.4rem + 2.6vw, 3.4rem); line-height: 1.02; letter-spacing: -.045em; max-width: 11ch; color: var(--band-text); }
 .hero p { margin: 0; color: var(--band-muted); max-width: 38ch; }
@@ -363,6 +331,50 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .trust .icon { width: 30px; height: 30px; color: var(--accent-text); }
 .trust div { display: flex; flex-direction: column; line-height: 1.35; }
 .trust span { color: var(--muted); font-size: .82rem; }
+
+/* ---------- Background presets ----------
+   Used by the home banner, the promo tiles and the deals band (settings: Shop:Hero:Background, Shop:Promo:Background,
+   Shop:DealTileBackground, Shop:DealsBackground). Soft presets mix two coloured glows over a pale base, which turns dark
+   in the dark theme; artwork presets add shapes drawn by _BgPattern in --p1/--p2. */
+.bg-preset.bg-preset { position: relative; overflow: hidden; isolation: isolate; border-color: transparent; background: radial-gradient(55% 80% at 88% 15%, var(--g1), transparent 70%), radial-gradient(50% 75% at 5% 105%, var(--g2), transparent 70%), linear-gradient(120deg, var(--b1) 0%, var(--b2) 55%, var(--b3) 100%); }
+.bg-preset > :not(.hero-art, .bg-pattern) { position: relative; z-index: 1; }
+.bg-pattern { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.bg-accent { --g1: color-mix(in srgb, var(--accent) 34%, transparent); --g2: color-mix(in srgb, var(--accent) 20%, transparent); --b1: var(--accent-soft); --b2: var(--surface); --b3: var(--accent-soft-2); }
+.bg-sky { --g1: #8fbaff99; --g2: #9fe6ff88; --b1: #eaf3ff; --b2: #f7fbff; --b3: #dbe9ff; }
+.bg-mint { --g1: #8fe3c299; --g2: #b6ecff88; --b1: #e8f9f1; --b2: #f6fdf9; --b3: #d6f3e6; }
+.bg-peach { --g1: #ffb98f99; --g2: #ffc4dc88; --b1: #fff1e8; --b2: #fffaf6; --b3: #ffe4d8; }
+.bg-lavender { --g1: #b9a6ff99; --g2: #ffc6ec88; --b1: #f1edff; --b2: #fbfaff; --b3: #e6dcff; }
+.bg-aurora { --g1: #7ef0d9aa; --g2: #9b7bffaa; --b1: #2f6fe0; --b2: #5a5be6; --b3: #12a99c; }
+.bg-sunset { --g1: #ffd27a99; --g2: #ff6fa4aa; --b1: #ff8a5c; --b2: #f0608f; --b3: #8a5cf0; }
+.bg-midnight { --g1: #2f7fd699; --g2: #7b5ce077; --b1: #0f1830; --b2: #141f3b; --b3: #1d2b52; }
+.bg-waves { --g1: color-mix(in srgb, var(--accent) 18%, transparent); --g2: transparent; --b1: var(--accent-soft); --b2: var(--surface); --b3: var(--accent-soft-2); --p1: var(--accent); --p2: color-mix(in srgb, var(--accent) 22%, transparent); }
+.bg-geometric { --g1: color-mix(in srgb, var(--accent) 22%, transparent); --g2: transparent; --b1: var(--surface); --b2: var(--accent-soft); --b3: var(--accent-soft-2); --p1: var(--accent); }
+.bg-swoosh { --g1: transparent; --g2: transparent; --b1: var(--surface); --b2: var(--surface); --b3: var(--accent-soft); --p1: var(--accent); --p2: color-mix(in srgb, var(--accent) 30%, transparent); }
+.bg-watercolor { --g1: transparent; --g2: transparent; --b1: #fffdf8; --b2: #ffffff; --b3: #f8fbf6; --p1: #f4a340; --p2: #2e9e6f; }
+.bg-halftone { --g1: #fff4b0aa; --g2: transparent; --b1: #ffd84a; --b2: #ffe066; --b3: #ffd23a; --p1: #1f4fa3; --p2: #f2a900; }
+.bg-streaks { --g1: #3d8bff33; --g2: #ff3d7f26; --b1: #0d1230; --b2: #161b40; --b3: #101531; --p1: #ff3d7f; --p2: #3d8bff; }
+.bg-network { --g1: color-mix(in srgb, var(--accent) 30%, transparent); --g2: transparent; --b1: #060c1d; --b2: #0b1430; --b3: #0a1027; --p1: color-mix(in srgb, var(--accent) 75%, #fff); --p2: #d6457a; }
+
+/* Text and controls on strong or dark presets: white. */
+.bg-preset.on-color, .bg-preset.on-color :is(h1, h2, p strong, .promo-tile strong) { color: #fff; }
+.bg-preset.on-color.promo-tile > span:last-child, .bg-preset.on-color > p, .bg-preset.on-color .deals-intro p { color: rgba(255, 255, 255, .86); }
+.bg-preset.on-color .eyebrow { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .35); padding: 5px 12px; border-radius: 999px; }
+.bg-preset.on-color .btn-accent { background: rgba(255, 255, 255, .94); border-color: rgba(255, 255, 255, .5); color: #14161a; }
+.bg-preset.on-color .btn-accent:hover { background: #fff; color: #14161a; }
+.bg-preset.on-color .btn-on-dark { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .45); color: #fff; }
+.bg-preset.on-color .btn-on-dark:hover { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .7); color: #fff; }
+.bg-preset.on-color .countdown span { background: rgba(255, 255, 255, .1); border-color: rgba(255, 255, 255, .22); color: rgba(255, 255, 255, .75); box-shadow: none; }
+.bg-preset.on-color .countdown strong { color: #fff; }
+/* Bright presets: dark text even in the dark theme. */
+.bg-preset.on-light, .bg-preset.on-light :is(h1, h2, p strong, .promo-tile strong) { color: #14161a; }
+.bg-preset.on-light > p, .bg-preset.on-light .deals-intro p { color: #3d3a2c; }
+.bg-preset.on-light .eyebrow { color: #14161a; background: rgba(255, 255, 255, .6); box-shadow: inset 0 0 0 2px rgba(20, 22, 26, .14); padding: 5px 12px; border-radius: 999px; }
+.bg-preset.on-light .btn-accent { background: rgba(255, 255, 255, .92); border-color: color-mix(in srgb, var(--p1) 45%, transparent); color: var(--p1); }
+.bg-preset.on-light .btn-on-dark { background: rgba(255, 255, 255, .45); border-color: rgba(20, 22, 26, .16); color: #14161a; }
+/* Soft presets on tiles keep the tile's own text colours; the pre-order tile drops its tint. */
+.promo-tile.bg-preset { border-width: 0; }
+.promo-tile .eyebrow { align-self: flex-start; }
+.promo-tile.bg-preset:not(.on-color, .on-light) .eyebrow { color: var(--muted); }
 
 /* ---------- Listing ---------- */
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 6px; font-size: .82rem; color: var(--muted); margin-bottom: 6px; }
@@ -698,7 +710,7 @@ legend { font-family: var(--display); font-weight: 700; padding: 0 6px; }
     .cat-tile strong { font-size: .7rem; }
     .cat-tile .photo { border-radius: 16px; box-shadow: inset 0 -4px 0 var(--surface-3), var(--shadow-card); }
     .deals { margin-inline: calc(var(--gutter) * -1); border-radius: 0; padding: 24px var(--gutter); }
-    .deals-intro { display: flex; gap: 10px; }
+    .deals-intro { display: flex; align-items: flex-start; gap: 10px; }
     .deals .grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-right: calc(var(--gutter) * -1); padding-right: var(--gutter); scrollbar-width: none; }
     .deals .grid::-webkit-scrollbar { display: none; }
     .deals .card { flex: 0 0 160px; scroll-snap-align: start; }

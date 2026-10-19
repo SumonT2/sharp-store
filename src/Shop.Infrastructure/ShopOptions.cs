@@ -43,12 +43,17 @@ public class ShopOptions
         Eyebrow = "Fresh stock every week",
         Title = "Type faster.\nAim sharper.",
         Text = "Mechanical keyboards, gaming mice and desk gear. Compare every switch, layout and sensor, then pay cash on delivery.",
+        Background = "accent",
         ImageUrl = "/img/demo/hero-cutout.webp",
         Url = "/products",
         LinkText = "Shop all products",
     };
     /// <summary>Optional smaller banner beside the hero (the other one advertises pre-order deals).</summary>
     public HomeBanner? Promo { get; set; }
+    /// <summary>Background preset for the pre-order tile beside the hero; empty keeps its accent tint.</summary>
+    public string? DealTileBackground { get; set; }
+    /// <summary>Background preset for the pre-order deals band; empty keeps it plain.</summary>
+    public string? DealsBackground { get; set; }
 
     /// <summary>Rounds a selling price up to the precision customers see, so the shown price is what they pay.</summary>
     public decimal RoundPrice(decimal price)
@@ -70,11 +75,11 @@ public class HomeBanner
     public string Title { get; set; } = "";
     public string? Text { get; set; }
     /// <summary>
-    /// Background preset: accent, sky, mint, peach, lavender, aurora, sunset, midnight, or photo.
-    /// With a preset the picture is shown on the right (use a cut-out with a transparent background);
-    /// with "photo" the picture fills the whole banner.
+    /// Background preset (see BackgroundPresets: accent, waves, sunset…). For the hero, "photo" makes the picture fill the
+    /// banner; with a preset the picture is shown on the right (use a cut-out with a transparent background).
+    /// Empty keeps the plain look.
     /// </summary>
-    public string Background { get; set; } = "accent";
+    public string? Background { get; set; }
     /// <summary>The banner picture: a transparent cut-out for presets, or a wide photo (about 2:1, subject on the right) for "photo".</summary>
     public string? ImageUrl { get; set; }
     /// <summary>For "photo" only: a darker picture used with the dark theme.</summary>

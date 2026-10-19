@@ -1,15 +1,21 @@
 namespace Shop.Web.Infrastructure;
 
 /// <summary>
-/// Background presets for the home page banner (Shop:Hero:Background). The look of each lives in site.css
-/// (.hero-bg-{key}); "photo" uses the banner picture as the whole background instead.
+/// Background presets for home page sections: the banner (Shop:Hero:Background), the promo tile (Shop:Promo:Background),
+/// the pre-order tile (Shop:DealTileBackground) and the deals band (Shop:DealsBackground). The look of each lives in
+/// site.css (.bg-{key}); artwork presets also draw shapes with _BgPattern.
 /// </summary>
-public static class HeroBackgrounds
+public static class BackgroundPresets
 {
     /// <param name="OnColor">Strong or dark colour behind the text, so the text is white.</param>
     /// <param name="OnLight">Bright colour in both themes, so the text stays dark even in the dark theme.</param>
-    public sealed record Preset(string Key, string Name, bool OnColor = false, bool OnLight = false);
+    public sealed record Preset(string Key, string Name, bool OnColor = false, bool OnLight = false)
+    {
+        /// <summary>Classes to add to the section.</summary>
+        public string Classes => $"bg-preset bg-{Key}{(OnColor ? " on-color" : "")}{(OnLight ? " on-light" : "")}";
+    }
 
+    /// <summary>Banner only: the banner picture fills the whole background instead of a preset.</summary>
     public const string Photo = "photo";
 
     public static readonly IReadOnlyList<Preset> All =
@@ -29,10 +35,9 @@ public static class HeroBackgrounds
         new("streaks", "Neon streaks", OnColor: true),
         new("network", "Hexagon network", OnColor: true),
         new("midnight", "Midnight", OnColor: true),
-        new(Photo, "Photo (the banner picture fills the background)"),
     ];
 
-    /// <summary>The named preset, or the first one when the name is empty or unknown.</summary>
-    public static Preset Find(string? key) =>
-        All.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase)) ?? All[0];
+    /// <summary>The named preset, or null when the name is empty, "none" or unknown (the section keeps its plain look).</summary>
+    public static Preset? Find(string? key) =>
+        All.FirstOrDefault(p => string.Equals(p.Key, key?.Trim(), StringComparison.OrdinalIgnoreCase));
 }

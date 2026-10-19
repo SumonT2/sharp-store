@@ -13,10 +13,13 @@
 
     // While developing, ?hero-bg=waves previews another banner background without changing the settings.
     var previewBackground = Env.IsDevelopment() ? Context.Request.Query["hero-bg"].ToString() : "";
-    var background = HeroBackgrounds.Find(string.IsNullOrEmpty(previewBackground) ? hero.Background : previewBackground);
-    var isPhoto = background.Key == HeroBackgrounds.Photo;
-    var heroClass = isPhoto ? "hero hero-photo"
-        : $"hero hero-bg hero-bg-{background.Key}{(background.OnColor ? " hero-on-color" : "")}{(background.OnLight ? " hero-on-light" : "")}";
+    var heroBackground = string.IsNullOrEmpty(previewBackground) ? hero.Background : previewBackground;
+    var isPhoto = string.Equals(heroBackground, BackgroundPresets.Photo, StringComparison.OrdinalIgnoreCase);
+    var heroPreset = BackgroundPresets.Find(heroBackground);
+    var heroClass = isPhoto ? "hero hero-photo" : $"hero {heroPreset?.Classes}";
+    var dealTilePreset = BackgroundPresets.Find(Fmt.Shop.DealTileBackground);
+    var promoPreset = BackgroundPresets.Find(Model.Promo?.Background);
+    var dealsPreset = BackgroundPresets.Find(Fmt.Shop.DealsBackground);
 
     // Photo banners: the stylesheet picks the light or the dark picture to match the theme.
     string? HeroImages()
@@ -41,9 +44,9 @@
 <div class="home">
     <section class="home-top @(hasSide ? null : "is-single")" aria-label="Promotions">
         <div class="@heroClass" style="@HeroImages()">
-            @if (!isPhoto)
+            @if (heroPreset is not null)
             {
-                <partial name="_HeroPattern" model="background.Key" />
+                <partial name="_BgPattern" model='(heroPreset.Key, "bg-hero")' />
             }
             @if (!isPhoto && !string.IsNullOrWhiteSpace(hero.ImageUrl))
             {
@@ -86,7 +89,11 @@
             <div class="home-side">
                 @if (hasDeals)
                 {
-                    <a class="promo-tile promo-deal" href="/products?avail=pre-order">
+                    <a class="promo-tile promo-deal @dealTilePreset?.Classes" href="/products?avail=pre-order">
+                        @if (dealTilePreset is not null)
+                        {
+                            <partial name="_BgPattern" model='(dealTilePreset.Key, "bg-dealtile")' />
+                        }
                         <span class="eyebrow">Pre-order deals</span>
                         <strong>Lower prices,<br />delivered in ~@(Model.PreOrderDeals[0].LeadTimeDays ?? 15) days</strong>
                         <span>
@@ -103,7 +110,11 @@
                 }
                 @if (Model.Promo is { } promo)
                 {
-                    <a class="promo-tile" href="@(promo.Url ?? "/products")">
+                    <a class="promo-tile @promoPreset?.Classes" href="@(promo.Url ?? "/products")">
+                        @if (promoPreset is not null)
+                        {
+                            <partial name="_BgPattern" model='(promoPreset.Key, "bg-promo")' />
+                        }
                         <span class="eyebrow">@promo.Eyebrow</span>
                         <strong>@promo.Title</strong>
                         <span>@(promo.LinkText ?? "Shop now") →</span>
@@ -156,7 +167,11 @@
 
     @if (hasDeals)
     {
-        <section class="deals" aria-labelledby="deals-title">
+        <section class="deals @dealsPreset?.Classes" aria-labelledby="deals-title">
+            @if (dealsPreset is not null)
+            {
+                <partial name="_BgPattern" model='(dealsPreset.Key, "bg-deals")' />
+            }
             <div class="deals-intro">
                 <p class="eyebrow">Limited time</p>
                 <h2 id="deals-title">Pre-order deals</h2>

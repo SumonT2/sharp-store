@@ -51,7 +51,8 @@ Run tests with `dotnet test`.
 | `Shop:Hotline`, `Shop:SupportHours`, `Shop:Address` | Shown in the top bar, footer and on phones as a call button; leave empty to hide |
 | `Shop:Accent` | Default accent colour: `ocean`, `emerald`, `teal`, `violet`, `amber`, `raspberry` or `coral`. Visitors can pick their own in the display settings (the half-circle icon) |
 | `Shop:Hero` | Home page banner: `Eyebrow`, `Title` (`\n` for a new line), `Text`, `Url`, `LinkText`, or `ProductSku` to advertise one product with its live price. `Background` picks a preset: `accent`, `waves`, `geometric`, `swoosh` (these follow the visitor's colour), `watercolor`, `halftone`, `sky`, `mint`, `peach`, `lavender`, `aurora`, `sunset`, `streaks`, `network`, `midnight` (while developing, add `?hero-bg=waves` to the home page address to preview one); `ImageUrl` is then a product cut-out with a transparent background, shown on the right. With `Background` = `photo`, `ImageUrl` is a wide photo filling the banner (subject on the right) and `DarkImageUrl` an optional darker one for the dark theme |
-| `Shop:Promo` | Optional small banner beside the hero (`Eyebrow`, `Title`, `Url`, `LinkText`); the other one advertises pre-order deals automatically |
+| `Shop:Promo` | Optional small banner beside the hero (`Eyebrow`, `Title`, `Url`, `LinkText`, `Background`); the other one advertises pre-order deals automatically |
+| `Shop:DealTileBackground`, `Shop:DealsBackground` | Background presets for the pre-order tile and the pre-order deals band (same names as `Shop:Hero:Background`); empty keeps them plain. The development settings show a demo combination |
 | `Admin:Email`, `Admin:Password` | Creates the first admin when none exists |
 | `Jobs:RepriceIntervalMinutes` | How often prices are recalculated (so offer windows open and close on time) |
 | `Jobs:ScrapingEnabled`, `Jobs:ScrapeIntervalHours` | Automatic scraping schedule |
