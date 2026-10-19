@@ -131,18 +131,53 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
         ["AC-PD-XL"] = "pad-xl", ["AC-SW-RED"] = "switch-red", ["AC-KC-PBT"] = "keycaps-pbt", ["AC-WR-65"] = "wrist-rest", ["AC-CB-COIL"] = "cable-coil",
     };
 
+    // Pictures on the option buttons, and options with a photo of their own.
+    private static readonly Dictionary<string, string> OptionPhotos = new()
+    {
+        ["KB-KV-K68"] = "switch-red", ["KB-KV-K68-BRN"] = "switch-brown", ["KB-KV-K68-BLU"] = "switch-blue",
+        ["MS-CL-G3W"] = "mouse-g3", ["MS-CL-G3W-BLK"] = "mouse-g3-black",
+    };
+    private static readonly Dictionary<string, string> VariantPhotos = new() { ["MS-CL-G3W-BLK"] = "mouse-g3-black" };
+    private static readonly Dictionary<string, string[]> Galleries = new()
+    {
+        ["KB-KV-K68"] = ["kb-k68-angle", "kb-k68-top", "kb-k68-side", "switch-red"],
+    };
+
     private static string Photo(string name) => $"{DemoImages}{name}.webp";
+
+    /// <summary>
+    /// Gives demo products their photos where they have none yet, e.g. in a database seeded by an older version.
+    /// Photos set by hand are left alone. Returns how many products changed.
+    /// </summary>
+    public async Task<int> AddMissingPhotosAsync(CancellationToken ct = default)
+    {
+        var skus = Photos.Keys.Concat(OptionPhotos.Keys).Concat(VariantPhotos.Keys).Distinct().ToList();
+        var products = await db.Products.Where(p => skus.Contains(p.Sku)).ToListAsync(ct);
+        var changed = 0;
+        foreach (var p in products)
+        {
+            var before = (p.ImageUrl, p.GalleryUrls, p.OptionImageUrl);
+            if (p.ImageUrl is null && (Photos.TryGetValue(p.Sku, out var photo) || VariantPhotos.TryGetValue(p.Sku, out photo)))
+                p.ImageUrl = Photo(photo);
+            if (p.GalleryUrls is null && Galleries.TryGetValue(p.Sku, out var gallery))
+                p.GalleryUrls = string.Join('\n', gallery.Select(Photo));
+            if (p.OptionImageUrl is null && OptionPhotos.TryGetValue(p.Sku, out var option))
+                p.OptionImageUrl = Photo(option);
+            if (before != (p.ImageUrl, p.GalleryUrls, p.OptionImageUrl))
+                changed++;
+        }
+        await db.SaveChangesAsync(ct);
+        return changed;
+    }
 
     private async Task AddOptionsAsync(
         string mainSku, string mainLabel, string varyingAttribute,
-        (string Sku, string Label, decimal ImporterCost, int Stock, decimal? ChinaCostCny, string? Photo, string OptionPhoto)[] options,
-        string mainOptionPhoto,
+        (string Sku, string Label, decimal ImporterCost, int Stock, decimal? ChinaCostCny)[] options,
         Supplier importer, Supplier china, DateTime now, DateTime windowStart, DateTime windowEnd, CancellationToken ct)
     {
         var main = await db.Products.Include(p => p.Specifications).ThenInclude(s => s.Attribute).FirstAsync(p => p.Sku == mainSku, ct);
         main.VariantLabel = mainLabel;
-        main.OptionImageUrl = Photo(mainOptionPhoto);
-        foreach (var (sku, label, cost, stock, cny, photo, optionPhoto) in options)
+        foreach (var (sku, label, cost, stock, cny) in options)
         {
             var variant = new Product
             {
@@ -151,8 +186,6 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
                 Slug = await writer.UniqueProductSlugAsync($"{main.Name} {label}", null, ct),
                 VariantOf = main,
                 VariantLabel = label,
-                ImageUrl = photo is null ? null : Photo(photo),
-                OptionImageUrl = Photo(optionPhoto),
                 CategoryId = main.CategoryId,
                 BrandId = main.BrandId,
                 ShortDescription = main.ShortDescription,
@@ -234,8 +267,6 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
                 Brand = await writer.GetOrCreateBrandAsync(d.Brand, ct),
                 IsPublished = true,
                 IsFeatured = FeaturedSkus.Contains(d.Sku),
-                ImageUrl = Photos.TryGetValue(d.Sku, out var photo) ? Photo(photo) : null,
-                GalleryUrls = d.Sku == "KB-KV-K68" ? string.Join('\n', new[] { "kb-k68-angle", "kb-k68-top", "kb-k68-side", "switch-red" }.Select(Photo)) : null,
                 CreatedAt = now.AddMinutes(-index++),
                 UpdatedAt = now,
             };
@@ -273,13 +304,14 @@ public class DemoSeeder(ShopDbContext db, CatalogWriter writer, PriceUpdateServi
 
         // Options of the same product: the K68 in three switch types, the G3 mouse in two colours.
         await AddOptionsAsync("KB-KV-K68", "Red (Linear)", "Switch Type",
-            [("KB-KV-K68-BRN", "Brown (Tactile)", 4350m, 9, null, null, "switch-brown"), ("KB-KV-K68-BLU", "Blue (Clicky)", 4150m, 0, 205m, null, "switch-blue")],
-            "switch-red", importer, china, now, windowStart, windowEnd, ct);
+            [("KB-KV-K68-BRN", "Brown (Tactile)", 4350m, 9, null), ("KB-KV-K68-BLU", "Blue (Clicky)", 4150m, 0, 205m)],
+            importer, china, now, windowStart, windowEnd, ct);
         await AddOptionsAsync("MS-CL-G3W", "White", "Color",
-            [("MS-CL-G3W-BLK", "Black", 3950m, 7, null, "mouse-g3-black", "mouse-g3-black")],
-            "mouse-g3", importer, china, now, windowStart, windowEnd, ct);
+            [("MS-CL-G3W-BLK", "Black", 3950m, 7, null)],
+            importer, china, now, windowStart, windowEnd, ct);
 
         await db.SaveChangesAsync(ct);
+        await AddMissingPhotosAsync(ct);
         await pricing.RepriceAllAsync("Demo data", ct);
         return true;
     }

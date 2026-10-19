@@ -99,8 +99,14 @@ static async Task InitializeDatabaseAsync(WebApplication app)
 
     await services.GetRequiredService<AdminAccountService>().EnsureInitialAdminAsync();
 
-    if (config.GetValue("Seed:DemoData", false) && await services.GetRequiredService<DemoSeeder>().SeedIfEmptyAsync())
-        logger.LogInformation("Demo data added.");
+    if (config.GetValue("Seed:DemoData", false))
+    {
+        var seeder = services.GetRequiredService<DemoSeeder>();
+        if (await seeder.SeedIfEmptyAsync())
+            logger.LogInformation("Demo data added.");
+        else if (await seeder.AddMissingPhotosAsync() is > 0 and var count)
+            logger.LogInformation("Added demo photos to {Count} products.", count);
+    }
 
     // Bring prices, availability and product-family summaries up to date after an upgrade or restart.
     await services.GetRequiredService<Shop.Infrastructure.Pricing.PriceUpdateService>().RepriceAllAsync("Startup");
