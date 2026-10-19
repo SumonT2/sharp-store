@@ -5,11 +5,23 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Shop.Infrastructure;
 using Shop.Infrastructure.Data;
 using Shop.Web.Infrastructure;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    // A Windows service starts in System32, so the app's own folder must be the content root (views, wwwroot).
+    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : null,
+});
+// Settings kept outside the app folder (deploy.ps1 uses C:\Store\appsettings.Production.json), so a deployment never
+// overwrites passwords or shop details.
+if (Environment.GetEnvironmentVariable("SHOP_SETTINGS") is { Length: > 0 } settingsFile)
+    builder.Configuration.AddJsonFile(settingsFile, optional: false, reloadOnChange: true);
+// Runs as a Windows service when started by the service manager; does nothing otherwise.
+builder.Services.AddWindowsService(o => o.ServiceName = "TechBhai");
 const long maxUploadBytes = 20 * 1024 * 1024;
 
 builder.Services.AddShopInfrastructure(builder.Configuration);

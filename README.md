@@ -76,6 +76,32 @@ the product itself, and products that are deleted or unpublished drop off the li
 5. **Website suppliers.** For suppliers that publish prices online (e.g. UGREEN from a distributor), upload a list of product links and let the scraper fill in prices. A dealer discount such as 7% is set on the supplier as extra cost `-7`. See the CSV guide, section 3.
 6. **Done.** Prices update immediately. They're also recalculated every few minutes, so when the China offer window closes, the product switches to the next best offer or becomes out of stock.
 
+## Deploy on Windows (C:\Store, port 5014)
+
+Needs the .NET 10 SDK and PostgreSQL on the machine. Create the database once (in psql or pgAdmin):
+
+```sql
+CREATE USER shop WITH PASSWORD 'your-password';
+CREATE DATABASE shop OWNER shop;
+```
+
+Then open PowerShell **as Administrator** in the root of the repository and run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass   # only if scripts are blocked
+.\deploy.ps1                 # add -DemoData on the first run to load the demo catalogue
+```
+
+The first run asks for the database password, the admin login and the hotline, and saves them in
+`C:\Store\appsettings.Production.json` (readable only by administrators and the service). It installs the site as the
+Windows service **TechBhai**, which starts with Windows and restarts itself after a crash. Open http://localhost:5014.
+
+To update, `git pull` and run `.\deploy.ps1` again: it runs the tests, backs up the database (when `pg_dump` is found)
+to `C:\Store\backups`, keeps the old version in `C:\Store\app.previous` and installs the new one. Options:
+`-Port 8080`, `-Target D:\Shop`, `-OpenFirewall` (let other computers reach the port), `-SkipTests`, `-SkipBackup`,
+and `-Rollback` to return to the previous version. Change settings with `notepad C:\Store\appsettings.Production.json`,
+then `Restart-Service TechBhai`. For customers on the internet, put IIS or nginx with HTTPS in front of the port.
+
 ## Deploy to a VPS (Ubuntu)
 
 ```bash

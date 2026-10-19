@@ -5,7 +5,7 @@ commercial use, modification and closed-source distribution. Keep this file with
 
 | Package | License | Used for |
 |---|---|---|
-| .NET runtime, ASP.NET Core, Entity Framework Core (Microsoft) | MIT | Web framework, database access |
+| .NET runtime, ASP.NET Core, Entity Framework Core, Microsoft.Extensions.Hosting.WindowsServices (Microsoft) | MIT | Web framework, database access, running as a Windows service |
 | Npgsql / Npgsql.EntityFrameworkCore.PostgreSQL | PostgreSQL License (MIT-like) | PostgreSQL driver |
 | CsvHelper | MS-PL or Apache-2.0 (dual) | Reading CSV files |
 | AngleSharp | MIT | Reading prices from HTML pages |
