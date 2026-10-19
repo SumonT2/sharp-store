@@ -1,5 +1,10 @@
 @model (Facet Facet, ListingUrl Url, string Key)
+@{
+    // Short values (65%, TKL, 2.4G…) read better as a row of pills than as a checkbox list.
+    var values = Model.Facet.Values;
+    var pills = values.Count is > 0 and <= 10 && values.All(v => v.Label.Length <= 9);
+}
 <details class="facet" open>
     <summary>@Model.Facet.Name</summary>
-    <partial name="_FacetOptions" model="(Model.Facet, Model.Url, Model.Key, 6)" />
+    <partial name="_FacetOptions" model="(Model.Facet, Model.Url, Model.Key, pills ? 10 : 6)" view-data='new ViewDataDictionary(ViewData) { ["Pills"] = pills }' />
 </details>

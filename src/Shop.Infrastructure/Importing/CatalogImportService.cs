@@ -27,6 +27,8 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
         ["short_description"] = ["summary"],
         ["description"] = ["long_description"],
         ["image_url"] = ["image", "picture"],
+        ["gallery"] = ["gallery_urls", "more_images", "images"],
+        ["option_image"] = ["option_image_url", "swatch"],
         ["published"] = ["is_published", "visible"],
         ["featured"] = ["is_featured"],
         ["variant_of"] = ["parent_sku", "main_sku"],
@@ -228,6 +230,10 @@ public class CatalogImportService(ShopDbContext db, CatalogWriter writer, PriceU
         product.ShortDescription = TextOrKeep(row.Get("short_description"), product.ShortDescription, 1000);
         product.Description = TextOrKeep(row.Get("description"), product.Description, 20_000);
         product.ImageUrl = TextOrKeep(row.Get("image_url"), product.ImageUrl, 1000);
+        // Several photos in one cell, separated by "|" (a new line also works).
+        if (row.Get("gallery") is { } gallery)
+            product.GalleryUrls = TextOrKeep(string.Join('\n', gallery.Split(['|', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)), product.GalleryUrls, 10_000);
+        product.OptionImageUrl = TextOrKeep(row.Get("option_image"), product.OptionImageUrl, 1000);
 
         if (row.Get("published") is { } published)
         {

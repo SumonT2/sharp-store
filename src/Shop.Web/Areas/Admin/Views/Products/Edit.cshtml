@@ -64,7 +64,9 @@
         </div>
         <div class="field"><label asp-for="Input.ShortDescription"></label><textarea asp-for="Input.ShortDescription" rows="2"></textarea></div>
         <div class="field"><label asp-for="Input.Description"></label><textarea asp-for="Input.Description" rows="6"></textarea><span class="hint">Plain text. Leave a blank line between paragraphs. Use your own words or text you have permission to use.</span></div>
-        <div class="field"><label asp-for="Input.ImageUrl"></label><input asp-for="Input.ImageUrl" type="url" placeholder="https://…" /><span class="hint">Use your own photos or images the supplier allows you to use.</span><span asp-validation-for="Input.ImageUrl" class="field-error"></span></div>
+        <div class="field"><label asp-for="Input.ImageUrl"></label><input asp-for="Input.ImageUrl" placeholder="https://… or /img/products/…" /><span class="hint">Use your own photos or images the supplier allows you to use. A square picture on a light background works best.</span><span asp-validation-for="Input.ImageUrl" class="field-error"></span></div>
+        <div class="field"><label asp-for="Input.GalleryUrls"></label><textarea asp-for="Input.GalleryUrls" rows="3" class="mono" placeholder="One photo address per line"></textarea><span class="hint">Shown as thumbnails under the main photo on the product page.</span><span asp-validation-for="Input.GalleryUrls" class="field-error"></span></div>
+        <div class="field"><label asp-for="Input.OptionImageUrl"></label><input asp-for="Input.OptionImageUrl" placeholder="Optional" /><span class="hint">For options only: a small picture on the option button, such as the switch or the colour.</span><span asp-validation-for="Input.OptionImageUrl" class="field-error"></span></div>
         <div class="field">
             <label asp-for="Input.SpecsText"></label>
             <textarea asp-for="Input.SpecsText" rows="10" class="mono" placeholder="Display > Screen Size [inch]: 6.5&#10;Performance > RAM [GB]: 8"></textarea>

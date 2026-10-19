@@ -28,6 +28,25 @@ public class ShopOptions
     public string? PhonePattern { get; set; } = @"^(?:\+?88)?01[3-9]\d{8}$";
     public string PhoneHint { get; set; } = "Bangladeshi mobile number, e.g. 01712-345678";
 
+    /// <summary>Customer phone line shown in the header and footer; hidden when empty.</summary>
+    public string? Hotline { get; set; }
+    /// <summary>When the hotline answers, e.g. "10am–8pm, every day".</summary>
+    public string? SupportHours { get; set; }
+    /// <summary>Shop or pickup address shown in the footer; hidden when empty.</summary>
+    public string? Address { get; set; }
+    /// <summary>The big banner at the top of the home page.</summary>
+    public HomeBanner Hero { get; set; } = new()
+    {
+        Eyebrow = "Fresh stock every week",
+        Title = "Type faster.\nAim sharper.",
+        Text = "Mechanical keyboards, gaming mice and desk gear. Compare every switch, layout and sensor, then pay cash on delivery.",
+        ImageUrl = "/img/demo/hero.webp",
+        Url = "/products",
+        LinkText = "Shop all products",
+    };
+    /// <summary>Optional smaller banner beside the hero (the other one advertises pre-order deals).</summary>
+    public HomeBanner? Promo { get; set; }
+
     /// <summary>Rounds a selling price up to the precision customers see, so the shown price is what they pay.</summary>
     public decimal RoundPrice(decimal price)
     {
@@ -38,6 +57,21 @@ public class ShopOptions
     public IReadOnlyList<DeliveryZone> EffectiveDeliveryZones => DeliveryZones.Count > 0
         ? DeliveryZones
         : [new DeliveryZone { Name = "Inside Dhaka", Fee = 70, Days = "1–2 days" }, new DeliveryZone { Name = "Outside Dhaka", Fee = 130, Days = "2–4 days" }];
+}
+
+public class HomeBanner
+{
+    /// <summary>Small label above the title, e.g. "Deal of the week".</summary>
+    public string? Eyebrow { get; set; }
+    /// <summary>Headline; a line break ("\n") starts a new line.</summary>
+    public string Title { get; set; } = "";
+    public string? Text { get; set; }
+    /// <summary>Wide picture (about 2:1) with its subject on the right, so the text on the left stays readable.</summary>
+    public string? ImageUrl { get; set; }
+    public string? Url { get; set; }
+    public string? LinkText { get; set; }
+    /// <summary>When set, the banner shows this product's live "from" price and links to it.</summary>
+    public string? ProductSku { get; set; }
 }
 
 public class DeliveryZone

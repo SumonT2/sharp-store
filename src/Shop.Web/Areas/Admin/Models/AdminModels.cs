@@ -67,8 +67,14 @@ public sealed class ProductEditInput
     [StringLength(20000)]
     public string? Description { get; set; }
 
-    [Display(Name = "Image URL"), Url, StringLength(1000)]
+    [Display(Name = "Main photo"), PhotoUrl, StringLength(1000)]
     public string? ImageUrl { get; set; }
+
+    [Display(Name = "More photos"), PhotoUrl, StringLength(10_000)]
+    public string? GalleryUrls { get; set; }
+
+    [Display(Name = "Option picture"), PhotoUrl, StringLength(1000)]
+    public string? OptionImageUrl { get; set; }
 
     [Display(Name = "Published")]
     public bool IsPublished { get; set; } = true;
@@ -225,3 +231,19 @@ public sealed class RuleEditInput
 }
 
 public sealed record Option(string Value, string Label);
+
+/// <summary>
+/// A photo address, or several (one per line): a full http(s) URL, or a path on this site such as /img/products/k68.webp.
+/// </summary>
+[AttributeUsage(AttributeTargets.Property)]
+public sealed class PhotoUrlAttribute : ValidationAttribute
+{
+    public PhotoUrlAttribute() : base("{0} must be a web address (https://…) or a path on this site (/img/…), one per line.") { }
+
+    public override bool IsValid(object? value) =>
+        value is not string text || text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).All(IsPhotoUrl);
+
+    private static bool IsPhotoUrl(string url) =>
+        (url.StartsWith('/') && !url.StartsWith("//"))
+        || (Uri.TryCreate(url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp));
+}

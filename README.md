@@ -48,6 +48,9 @@ Run tests with `dotnet test`.
 | `Shop:InStockMaxLeadDays` | Offers delivering within this many days count as "in stock"; slower ones are pre-orders |
 | `Shop:DeliveryZones`, `Shop:FreeShippingOver` | Delivery areas with fees (inside Dhaka ৳70, outside ৳130) and the free-delivery threshold |
 | `Shop:PhonePattern`, `Shop:PhoneHint` | Phone number check at checkout (Bangladeshi mobile numbers) |
+| `Shop:Hotline`, `Shop:SupportHours`, `Shop:Address` | Shown in the top bar, footer and on phones as a call button; leave empty to hide |
+| `Shop:Hero` | Home page banner: `Eyebrow`, `Title` (`\n` for a new line), `Text`, `ImageUrl` (wide, subject on the right), `Url`, `LinkText`, or `ProductSku` to advertise one product with its live price |
+| `Shop:Promo` | Optional small banner beside the hero (`Eyebrow`, `Title`, `Url`, `LinkText`); the other one advertises pre-order deals automatically |
 | `Admin:Email`, `Admin:Password` | Creates the first admin when none exists |
 | `Jobs:RepriceIntervalMinutes` | How often prices are recalculated (so offer windows open and close on time) |
 | `Jobs:ScrapingEnabled`, `Jobs:ScrapeIntervalHours` | Automatic scraping schedule |
@@ -78,7 +81,8 @@ Then install nginx with `deploy/nginx.conf` and get a free HTTPS certificate wit
 
 ## Copyright and licensing notes
 
-- **Code.** All dependencies are permissively licensed (see `THIRD-PARTY-NOTICES.md`). The design, CSS and icons are original and use no third-party assets.
+- **Code.** All dependencies are permissively licensed (see `THIRD-PARTY-NOTICES.md`). The design, CSS and icons are original. The two fonts are under the SIL Open Font License, which allows commercial use.
+- **Demo photos.** The pictures in `wwwroot/img/demo/` are original renders of fictional products, made for this project. Replace them with photos of the real products you sell.
 - **Product content.** Only use product photos and descriptions that you created yourself or that the manufacturer or importer allows you to use. Don't copy them from other shops.
 - **Scraping.** The scraper only collects prices and stock status. Only scrape sites whose terms of service allow it or whose owner has agreed; a data feed from the supplier is better when available.
 - **Brand names.** Using brand and product names to describe genuine products you sell is normal. Don't use other companies' logos as your own branding.

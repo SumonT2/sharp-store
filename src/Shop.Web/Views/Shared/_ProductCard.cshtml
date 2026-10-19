@@ -1,33 +1,52 @@
 @model ProductCard
 @{
     var discount = ShopFormatter.DiscountPercent(Model.Price, Model.CompareAtPrice);
+    var rank = ViewData["Rank"] as int?;
+    var isPre = Model.Availability == Availability.PreOrder;
 }
 <article class="card">
-    <a class="card-media" href="/p/@Model.Slug" tabindex="-1" aria-hidden="true">
+    <a class="photo" href="/p/@Model.Slug" tabindex="-1" aria-hidden="true">
         <partial name="_ProductImage" model="(Model.ImageUrl, Model.Name)" />
         <span class="card-tags">
+            @if (rank is { } r)
+            {
+                <span class="tag tag-rank">#@r</span>
+            }
             @if (discount is { } d)
             {
                 <span class="tag tag-sale">-@d%</span>
             }
-            @if (Model.Availability == Availability.PreOrder)
+            @if (isPre)
             {
                 <span class="tag tag-pre">Pre-order</span>
             }
-            else if (Model.IsFeatured)
+            else if (Model.IsFeatured && rank is null)
             {
                 <span class="tag tag-featured">Featured</span>
             }
         </span>
-        @if (Model.Availability == Availability.PreOrder && Model.OfferEndsAt is { } ends)
+        @if (isPre && Model.OfferEndsAt is { } ends)
         {
             <span class="tag tag-timer"><partial name="_Icon" model='"clock"' /><time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)">@Fmt.Date(ends)</time></span>
         }
     </a>
-    <div class="card-body">
-        <div class="card-top">
-            <h3 class="card-title"><a href="/p/@Model.Slug">@Model.Name</a></h3>
-            <div class="card-price">
+    @if (Model.Brand is not null)
+    {
+        <span class="card-brand">@Model.Brand</span>
+    }
+    <h3 class="card-title"><a href="/p/@Model.Slug">@Model.Name</a></h3>
+    @if (Model.Highlights.Count > 0)
+    {
+        <ul class="card-specs">
+            @foreach (var h in Model.Highlights.Take(3))
+            {
+                <li>@h</li>
+            }
+        </ul>
+    }
+    <div class="card-foot">
+        <div class="card-price">
+            <span class="price-row">
                 @if (Model.PriceMax is { } max && max > Model.Price)
                 {
                     <span class="price-now price-range">@Fmt.Money(Model.Price) – @Fmt.Money(max)</span>
@@ -40,38 +59,21 @@
                 {
                     <s class="price-was">@Fmt.Money(Model.CompareAtPrice)</s>
                 }
-            </div>
-        </div>
-        @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
-        {
-            <p class="card-desc">@Model.ShortDescription</p>
-        }
-        @if (Model.Highlights.Count > 0)
-        {
-            <ul class="card-specs">
-                @foreach (var h in Model.Highlights.Take(3))
-                {
-                    <li>@h</li>
-                }
-            </ul>
-        }
-        <div class="card-foot">
-            <span class="stock stock-@CatalogQueryService.AvailabilitySlug(Model.Availability)">
-                @(Model.Availability == Availability.PreOrder ? $"Ships in ~{Model.LeadTimeDays} days" : Fmt.AvailabilityText(Model.Availability, Model.LeadTimeDays))
             </span>
-            @if (Model.HasVariants && Model.CanBuy)
-            {
-                <a class="btn btn-outline btn-small" href="/p/@Model.Slug" aria-label="Choose options for @Model.Name">Choose options</a>
-            }
-            else if (Model.CanBuy)
-            {
-                <form method="post" asp-antiforgery="true" action="/cart/add">
-                    <input type="hidden" name="productId" value="@Model.Id" />
-                    <button type="submit" class="btn btn-outline btn-small" aria-label="Add @Model.Name to cart">
-                        @(Model.Availability == Availability.PreOrder ? "Pre-order" : "Add to cart")
-                    </button>
-                </form>
-            }
+            <span class="stock stock-@CatalogQueryService.AvailabilitySlug(Model.Availability)">
+                @(isPre ? $"Ships in ~{Model.LeadTimeDays} days" : Fmt.AvailabilityText(Model.Availability, Model.LeadTimeDays))
+            </span>
         </div>
+        @if (Model.HasVariants && Model.CanBuy)
+        {
+            <a class="round-btn" href="/p/@Model.Slug" aria-label="Choose options for @Model.Name" title="Choose options"><partial name="_Icon" model='"chevron"' /></a>
+        }
+        else if (Model.CanBuy)
+        {
+            <form method="post" asp-antiforgery="true" action="/cart/add">
+                <input type="hidden" name="productId" value="@Model.Id" />
+                <button type="submit" class="round-btn" aria-label="@(isPre ? "Pre-order" : "Add to cart"): @Model.Name" title="@(isPre ? "Pre-order" : "Add to cart")"><partial name="_Icon" model='"plus"' /></button>
+            </form>
+        }
     </div>
 </article>

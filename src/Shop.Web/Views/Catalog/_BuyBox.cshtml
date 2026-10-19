@@ -1,54 +1,17 @@
 @model ProductOption
 @{
     var p = Model.Product;
-    var discount = ShopFormatter.DiscountPercent(p.Price, p.CompareAtPrice);
     var qtyId = $"qty-{p.Id}";
+    var isPre = p.Availability == Availability.PreOrder;
 }
 <div class="buy-box">
-    <div class="price price-lg">
-        <span class="price-now">@Fmt.Money(p.Price)</span>
-        @if (discount is { } d)
-        {
-            <s class="price-was">@Fmt.Money(p.CompareAtPrice)</s>
-            <span class="tag tag-sale">Save @d%</span>
-        }
-    </div>
-
-    @switch (p.Availability)
+    @if (isPre && p.OfferEndsAt is { } ends)
     {
-        case Availability.InStock:
-            <div class="availability ok">
-                <partial name="_Icon" model='"check"' />
-                <div>
-                    <strong>In stock</strong>
-                    <span>Estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 1))</span>
-                </div>
-            </div>
-            break;
-        case Availability.PreOrder:
-            <div class="availability pre">
-                <partial name="_Icon" model='"truck"' />
-                <div>
-                    <strong>Pre-order · delivery in about @(p.LeadTimeDays ?? 15) days</strong>
-                    <span>Order today, estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 15))</span>
-                </div>
-            </div>
-            @if (p.OfferEndsAt is { } ends)
-            {
-                <div class="offer-timer">
-                    <partial name="_Icon" model='"clock"' />
-                    <span>This price is valid until <strong>@Fmt.DateTime(ends)</strong> — <time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)"></time></span>
-                </div>
-            }
-            break;
-        default:
-            <div class="availability out">
-                <partial name="_Icon" model='"x"' />
-                <div><strong>Out of stock</strong><span>Check back soon — stock is updated daily.</span></div>
-            </div>
-            break;
+        <div class="offer-timer">
+            <partial name="_Icon" model='"clock"' />
+            <span>Pre-order price valid until <strong>@Fmt.DateTime(ends)</strong> · <time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)"></time></span>
+        </div>
     }
-
     @if (p.IsPurchasable)
     {
         <form method="post" asp-antiforgery="true" action="/cart/add" class="add-form">
@@ -59,13 +22,10 @@
                 <input id="@qtyId" type="number" name="quantity" value="1" min="1" max="@Model.MaxQuantity" inputmode="numeric" />
                 <button type="button" data-qty="1" aria-label="Increase quantity">+</button>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg">
-                <partial name="_Icon" model='"cart"' /> @(p.Availability == Availability.PreOrder ? "Pre-order now" : "Add to cart")
+            <button type="submit" class="btn btn-primary">
+                <partial name="_Icon" model='"cart"' /> @(isPre ? "Pre-order" : "Add to cart")
             </button>
+            <button type="submit" name="buyNow" value="true" class="btn btn-accent">Buy now</button>
         </form>
-        @if (p.StockQuantity is > 0 and <= 5)
-        {
-            <p class="low-stock">Only @p.StockQuantity left</p>
-        }
     }
 </div>

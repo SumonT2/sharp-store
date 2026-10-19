@@ -17,7 +17,7 @@ public class CategoryMenu(ShopDbContext db, IMemoryCache cache)
 
         var all = await db.Categories.AsNoTracking().OrderBy(c => c.DisplayOrder).ThenBy(c => c.Name).ToListAsync();
         IReadOnlyList<CategoryLink> Build(int? parentId, int depth) =>
-            depth > 4 ? [] : all.Where(c => c.ParentId == parentId).Select(c => new CategoryLink(c.Name, c.Slug, Build(c.Id, depth + 1))).ToList();
+            depth > 4 ? [] : all.Where(c => c.ParentId == parentId).Select(c => new CategoryLink(c.Id, c.Name, c.Slug, Build(c.Id, depth + 1))).ToList();
 
         var tree = Build(null, 0);
         cache.Set(CacheKey, tree, TimeSpan.FromMinutes(2));

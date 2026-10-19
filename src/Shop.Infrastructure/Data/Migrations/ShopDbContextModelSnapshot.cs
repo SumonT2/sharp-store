@@ -428,6 +428,10 @@ namespace Shop.Infrastructure.Data.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("GalleryUrls")
+                        .HasMaxLength(10000)
+                        .HasColumnType("character varying(10000)");
+
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
@@ -468,6 +472,10 @@ namespace Shop.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("OfferEndsAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OptionImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<decimal?>("Price")
                         .HasPrecision(18, 4)

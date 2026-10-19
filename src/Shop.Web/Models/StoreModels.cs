@@ -1,19 +1,29 @@
 using Shop.Core.Entities;
+using Shop.Infrastructure;
 using Shop.Infrastructure.Catalog;
 using Shop.Infrastructure.Orders;
 using Shop.Web.Infrastructure;
 
 namespace Shop.Web.Models;
 
-public sealed record CategoryLink(string Name, string Slug, IReadOnlyList<CategoryLink> Children);
+public sealed record CategoryLink(int Id, string Name, string Slug, IReadOnlyList<CategoryLink> Children);
+
+public sealed record CategoryTile(string Name, string Slug, string? ImageUrl);
 
 public sealed class HomeViewModel
 {
-    public required IReadOnlyList<CategoryLink> Categories { get; init; }
+    public required HomeBanner Hero { get; init; }
+    /// <summary>The product the hero advertises, when it names one that is on sale.</summary>
+    public ProductCard? HeroProduct { get; init; }
+    public HomeBanner? Promo { get; init; }
+    public required IReadOnlyList<CategoryTile> Categories { get; init; }
     public required IReadOnlyList<ProductCard> Featured { get; init; }
-    public required IReadOnlyList<ProductCard> InStock { get; init; }
     public required IReadOnlyList<ProductCard> PreOrderDeals { get; init; }
-    public required IReadOnlyList<ProductCard> Newest { get; init; }
+    /// <summary>When the soonest pre-order offer window closes.</summary>
+    public DateTime? DealsEndAt { get; init; }
+    /// <summary>Best sellers when there are orders to rank by; otherwise the newest products.</summary>
+    public required IReadOnlyList<ProductCard> Popular { get; init; }
+    public bool PopularIsRanked { get; init; }
 }
 
 public sealed class ListingViewModel

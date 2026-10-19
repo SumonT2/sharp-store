@@ -67,7 +67,7 @@ public class OrderService(ShopDbContext db, PriceUpdateService pricing, ShopCloc
     {
         var o = options.Value;
         var ids = lines.Select(l => l.ProductId).Distinct().ToList();
-        var products = await db.Products.AsNoTracking().Where(p => ids.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
+        var products = await db.Products.AsNoTracking().Include(p => p.VariantOf).Where(p => ids.Contains(p.Id)).ToDictionaryAsync(p => p.Id, ct);
 
         var items = new List<CartItemView>();
         foreach (var line in lines)
@@ -82,7 +82,8 @@ public class OrderService(ShopDbContext db, PriceUpdateService pricing, ShopCloc
             else if (line.Quantity > max)
                 problem = $"Only {max} available.";
 
-            items.Add(new CartItemView(p.Id, p.Name, p.Slug, p.Sku, p.ImageUrl, p.Price ?? 0, line.Quantity, max,
+            // Options without their own photo use the main product's.
+            items.Add(new CartItemView(p.Id, p.Name, p.Slug, p.Sku, p.ImageUrl ?? p.VariantOf?.ImageUrl, p.Price ?? 0, line.Quantity, max,
                 p.Availability, p.LeadTimeDays, p.OfferEndsAt, problem));
         }
 

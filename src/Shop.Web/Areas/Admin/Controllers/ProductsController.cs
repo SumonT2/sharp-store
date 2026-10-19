@@ -65,6 +65,8 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
             ShortDescription = product.ShortDescription,
             Description = product.Description,
             ImageUrl = product.ImageUrl,
+            GalleryUrls = product.GalleryUrls,
+            OptionImageUrl = product.OptionImageUrl,
             IsPublished = product.IsPublished,
             IsFeatured = product.IsFeatured,
             VariantOfSku = product.VariantOf?.Sku,
@@ -121,6 +123,8 @@ public class ProductsController(ShopDbContext db, CatalogWriter writer, PriceUpd
         product.ShortDescription = Clean(input.ShortDescription);
         product.Description = Clean(input.Description);
         product.ImageUrl = Clean(input.ImageUrl);
+        product.GalleryUrls = Clean(string.Join('\n', (input.GalleryUrls ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
+        product.OptionImageUrl = Clean(input.OptionImageUrl);
         product.IsPublished = input.IsPublished;
         product.IsFeatured = input.IsFeatured;
         var previousMainId = product.VariantOfId;

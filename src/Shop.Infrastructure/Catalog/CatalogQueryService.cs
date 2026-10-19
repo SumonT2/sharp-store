@@ -202,6 +202,45 @@ public class CatalogQueryService(ShopDbContext db)
         return await ToCardsAsync(q.Take(take), ct);
     }
 
+    /// <summary>The card for one published main product, or null.</summary>
+    public async Task<ProductCard?> CardBySkuAsync(string sku, CancellationToken ct = default) =>
+        (await ToCardsAsync(db.Products.AsNoTracking().Where(p => p.Sku == sku && p.IsPublished && p.VariantOfId == null && p.ListPrice != null), ct)).FirstOrDefault();
+
+    /// <summary>
+    /// Best sellers by units ordered since <paramref name="since"/> (cancelled orders excluded). Options count towards
+    /// their main product. Products that can't be bought right now are skipped.
+    /// </summary>
+    public async Task<IReadOnlyList<ProductCard>> TopSellingAsync(int take, DateTime since, CancellationToken ct = default)
+    {
+        var ranked = await db.OrderItems.AsNoTracking()
+            .Join(db.Orders, i => i.OrderId, o => o.Id, (i, o) => new { i.ProductId, i.Quantity, o.CreatedAt, o.Status })
+            .Where(x => x.CreatedAt >= since && x.Status != OrderStatus.Cancelled)
+            .Join(db.Products, x => x.ProductId, p => p.Id, (x, p) => new { MainId = p.VariantOfId ?? p.Id, x.Quantity })
+            .GroupBy(x => x.MainId)
+            .Select(g => new { Id = g.Key, Units = g.Sum(x => x.Quantity) })
+            .OrderByDescending(x => x.Units).ThenBy(x => x.Id)
+            .Take(take * 2)
+            .ToListAsync(ct);
+        if (ranked.Count == 0)
+            return [];
+
+        var ids = ranked.Select(r => r.Id).ToList();
+        var cards = await ToCardsAsync(db.Products.AsNoTracking()
+            .Where(p => ids.Contains(p.Id) && p.IsPublished && p.VariantOfId == null && p.ListPrice != null && p.ListAvailability != Availability.OutOfStock), ct);
+        return cards.OrderBy(c => ids.IndexOf(c.Id)).Take(take).ToList();
+    }
+
+    /// <summary>A photo for each category, taken from its products (featured ones first), for category tiles.</summary>
+    public async Task<IReadOnlyDictionary<int, string>> CategoryPhotosAsync(IReadOnlyCollection<int> categoryIds, CancellationToken ct = default)
+    {
+        var rows = await db.Products.AsNoTracking()
+            .Where(p => p.IsPublished && p.VariantOfId == null && p.ImageUrl != null && p.CategoryId != null && categoryIds.Contains(p.CategoryId.Value))
+            .OrderByDescending(p => p.IsFeatured).ThenBy(p => p.ListAvailability == Availability.OutOfStock).ThenBy(p => p.Id)
+            .Select(p => new { CategoryId = p.CategoryId!.Value, p.ImageUrl })
+            .ToListAsync(ct);
+        return rows.GroupBy(r => r.CategoryId).ToDictionary(g => g.Key, g => g.First().ImageUrl!);
+    }
+
     private async Task<List<ProductCard>> ToCardsAsync(IQueryable<Product> q, CancellationToken ct)
     {
         var rows = await q

@@ -16,7 +16,7 @@ public class CartController(CartCookie cart, OrderService orders, ShopDbContext 
         View(await orders.BuildCartAsync(cart.Read(), ct));
 
     [HttpPost("/cart/add")]
-    public async Task<IActionResult> Add(int productId, int quantity = 1, CancellationToken ct = default)
+    public async Task<IActionResult> Add(int productId, int quantity = 1, bool buyNow = false, CancellationToken ct = default)
     {
         var product = await db.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == productId && p.IsPublished, ct);
         if (product is null || !product.IsPurchasable)
@@ -29,6 +29,8 @@ public class CartController(CartCookie cart, OrderService orders, ShopDbContext 
         var max = OrderService.MaxQuantity(product, options.Value);
         var newQuantity = Math.Clamp(existing + Math.Max(1, quantity), 1, Math.Max(1, max));
         cart.Set(productId, newQuantity);
+        if (buyNow)
+            return Redirect("/checkout");
 
         TempData["Flash"] = newQuantity < existing + quantity
             ? $"Added — you can order at most {max} of this item."

@@ -35,6 +35,10 @@ public class Product
     public string? ShortDescription { get; set; }
     public string? Description { get; set; }
     public string? ImageUrl { get; set; }
+    /// <summary>More photos for the product page gallery, one URL per line.</summary>
+    public string? GalleryUrls { get; set; }
+    /// <summary>Small picture on this option's button (e.g. the switch or colour); falls back to the option name only.</summary>
+    public string? OptionImageUrl { get; set; }
     public bool IsPublished { get; set; }
     /// <summary>Shown in the "Featured" section of the home page and first in listings.</summary>
     public bool IsFeatured { get; set; }
@@ -77,6 +81,14 @@ public class Product
     public DateTime? ListOfferEndsAt { get; set; }
     /// <summary>How many options can be bought right now.</summary>
     public int ListOptionCount { get; set; }
+
+    /// <summary>The main photo followed by the gallery photos, without blanks or repeats.</summary>
+    public IReadOnlyList<string> Photos() =>
+        new[] { ImageUrl }.Concat((GalleryUrls ?? "").Split('\n'))
+            .Select(u => u?.Trim())
+            .Where(u => !string.IsNullOrEmpty(u))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList()!;
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

@@ -51,7 +51,7 @@
         drawer.classList.toggle("is-open", open);
         drawer.setAttribute("aria-hidden", String(!open));
         document.body.classList.toggle("filters-open", open);
-        document.querySelectorAll(".pill-all").forEach(function (b) { b.setAttribute("aria-expanded", String(open)); });
+        document.querySelectorAll(".filters-btn").forEach(function (b) { b.setAttribute("aria-expanded", String(open)); });
     }
     function drawerOpen() {
         var drawer = document.getElementById("filters");
@@ -153,13 +153,37 @@
             if (ms <= 0) { el.textContent = "offer ended"; return; }
             var mins = Math.floor(ms / 60000);
             var d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), m = mins % 60;
-            el.textContent = d > 0 ? plural(d, "day") + " " + h + "h left"
-                : h > 0 ? h + "h " + m + "m left"
-                : plural(Math.max(1, m), "min") + " left";
+            var left = "short" in el.dataset ? "" : " left";
+            el.textContent = d > 0 ? plural(d, "day") + " " + h + "h" + left
+                : h > 0 ? h + "h " + m + "m" + left
+                : plural(Math.max(1, m), "min") + left;
+        });
+        // Days / hours / minutes boxes (home page deals band).
+        document.querySelectorAll("[data-countdown-boxes]").forEach(function (box) {
+            var ms = Math.max(0, Date.parse(box.dataset.countdownBoxes) - now);
+            var mins = Math.floor(ms / 60000);
+            var parts = { d: Math.floor(mins / 1440), h: Math.floor((mins % 1440) / 60), m: mins % 60 };
+            box.querySelectorAll("[data-unit]").forEach(function (el) {
+                el.textContent = String(parts[el.dataset.unit]).padStart(2, "0");
+            });
         });
     }
     renderCountdowns();
     setInterval(renderCountdowns, 30000);
+
+    // Product gallery: thumbnails switch the big photo.
+    document.addEventListener("click", function (e) {
+        var thumb = e.target.closest(".gallery-thumb[data-photo]");
+        if (!thumb) return;
+        var gallery = thumb.closest("[data-gallery]");
+        var main = gallery && gallery.querySelector("[data-gallery-main]");
+        if (!main || main.getAttribute("src") === thumb.dataset.photo) return;
+        var apply = function () {
+            main.src = thumb.dataset.photo;
+            gallery.querySelectorAll(".gallery-thumb").forEach(function (t) { t.setAttribute("aria-current", String(t === thumb)); });
+        };
+        if (document.startViewTransition && !reduceMotion) document.startViewTransition(apply); else apply();
+    });
 
     // Product options (switch type, colour…): switch price, stock and specs in place.
     document.addEventListener("click", function (e) {
@@ -174,7 +198,8 @@
                 o.classList.toggle("is-selected", on);
                 o.setAttribute("aria-checked", String(on));
             });
-            document.querySelectorAll("[data-option-panel]").forEach(function (panel) {
+            // An empty data-option-panel is shared by all options (Razor always writes data-* attributes).
+            document.querySelectorAll("[data-option-panel]:not([data-option-panel=''])").forEach(function (panel) {
                 panel.hidden = panel.dataset.optionPanel !== id;
             });
             document.querySelectorAll("[data-option-label]").forEach(function (el) { el.textContent = link.dataset.label; });
@@ -233,7 +258,7 @@
         var openKey = openPill ? openPill.dataset.key : null;
         var popScroll = openPill ? openPill.querySelector(".pill-pop").scrollTop : 0;
         var keepDrawer = drawerOpen();
-        var drawerScroll = keepDrawer ? root.querySelector(".drawer-body").scrollTop : 0;
+        var drawerScroll = keepDrawer ? root.querySelector(".filters-body").scrollTop : 0;
         var expanded = Array.prototype.map.call(root.querySelectorAll(".facet-list.is-expanded a[data-fk]"), function (a) { return a.dataset.fk.split(":")[0]; });
 
         root.classList.add("is-loading");
@@ -311,7 +336,7 @@
             var drawer = document.getElementById("filters");
             drawer.style.transition = "none";
             setDrawer(true);
-            root.querySelector(".drawer-body").scrollTop = drawerScroll;
+            root.querySelector(".filters-body").scrollTop = drawerScroll;
             drawer.offsetHeight; // apply without animating
             drawer.style.transition = "";
         }

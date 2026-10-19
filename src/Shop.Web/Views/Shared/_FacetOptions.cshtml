@@ -3,7 +3,7 @@
     var values = Model.Facet.Values;
     var anySelected = values.Any(v => v.Selected);
 }
-<ul class="facet-list @(values.Count > Model.Visible ? "is-collapsible" : null)">
+<ul class="facet-list @(ViewData["Pills"] is true ? "facet-pills" : null) @(values.Count > Model.Visible ? "is-collapsible" : null)">
     @for (var i = 0; i < values.Count; i++)
     {
         var v = values[i];

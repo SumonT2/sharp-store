@@ -48,6 +48,8 @@ public class ShopDbContext(DbContextOptions<ShopDbContext> options) : DbContext(
             e.Property(x => x.Name).HasMaxLength(300);
             e.Property(x => x.Slug).HasMaxLength(200);
             e.Property(x => x.ImageUrl).HasMaxLength(1000);
+            e.Property(x => x.GalleryUrls).HasMaxLength(10_000);
+            e.Property(x => x.OptionImageUrl).HasMaxLength(1000);
             e.Property(x => x.ShortDescription).HasMaxLength(1000);
             e.HasIndex(x => x.Sku).IsUnique();
             e.HasIndex(x => x.Slug).IsUnique();

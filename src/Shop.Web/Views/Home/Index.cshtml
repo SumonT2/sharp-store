@@ -3,150 +3,191 @@
     ViewData["Title"] = "";
     ViewData["Description"] = $"{Fmt.Shop.Name}: mechanical keyboards, mice and accessories in Bangladesh with detailed specifications and cash on delivery.";
 
+    var hero = Model.Hero;
+    var heroUrl = Model.HeroProduct is { } hp ? $"/p/{hp.Slug}" : hero.Url ?? "/products";
+    var titleLines = hero.Title.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    var hasDeals = Model.PreOrderDeals.Count > 0;
+    var hasSide = hasDeals || Model.Promo is not null;
+    var dealsLeft = Model.DealsEndAt is { } end ? end - Fmt.Clock.UtcNow : (TimeSpan?)null;
+
     static string IconFor(string slug) =>
         slug.Contains("keyboard") ? "keyboard"
         : slug.Contains("mice") || slug.Contains("mouse") ? "mouse"
-        : slug.Contains("pad") ? "pad"
+        : slug.Contains("pad") || slug.Contains("rest") ? "pad"
         : slug.Contains("switch") || slug.Contains("keycap") ? "keycap"
+        : slug.Contains("cable") ? "cable"
         : "grid";
-
-    // Hero illustration: a 75% keyboard drawn as key rows (widths in key units).
-    double[][] rows =
-    [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.5],
-        [1.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1.75, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.75],
-        [2.25, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.75, 1.5],
-        [1.25, 1.25, 1.25, 6.25, 1.5, 1, 1, 1],
-    ];
-    const double unit = 34, gap = 5, padding = 16;
 }
 
-<section class="hero">
-    <div class="hero-text">
-        <p class="eyebrow"><partial name="_Icon" model='"bolt"' /> Fresh stock every week</p>
-        <h1>Type faster.<br />Aim sharper.</h1>
-        <p class="lead">Mechanical keyboards, gaming mice and desk gear — compare every switch, layout and sensor, then pay cash on delivery anywhere in Bangladesh.</p>
-        <div class="hero-actions">
-            <a class="btn btn-dark btn-lg" href="/products">Shop all products</a>
-            <a class="btn btn-ghost btn-lg" href="/products?avail=pre-order">Pre-order deals</a>
-        </div>
-    </div>
-    <div class="hero-art" aria-hidden="true">
-        <svg class="kb" viewBox="0 0 593 222">
-            <rect class="kb-body" x="0" y="0" width="593" height="222" rx="22" />
-            @{
-                var y = padding;
-                var r = 0;
-            }
-            @foreach (var row in rows)
+<div class="home">
+    <section class="home-top @(hasSide ? null : "is-single")" aria-label="Promotions">
+        <div class="hero" style="@(string.IsNullOrWhiteSpace(hero.ImageUrl) ? null : $"background-image: url('{hero.ImageUrl}')")">
+            @if (!string.IsNullOrWhiteSpace(hero.Eyebrow))
             {
-                var x = padding;
-                var k = 0;
-                foreach (var w in row)
+                <p class="eyebrow">@hero.Eyebrow</p>
+            }
+            <h1>
+                @for (var i = 0; i < titleLines.Length; i++)
                 {
-                    var width = w * unit + (w - 1) * gap;
-                    var cls = (r == 0 && k == 0) || (r == 2 && k == row.Length - 1) ? "kb-key kb-accent" : r == 4 && k == 3 ? "kb-key kb-space" : "kb-key";
-                    <rect class="@cls" x="@x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)" y="@y" width="@width.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)" height="@unit" rx="6" />
-                    x += width + gap;
-                    k++;
-                }
-                y += unit + gap;
-                r++;
-            }
-        </svg>
-        <svg class="mouse-art" viewBox="0 0 90 140">
-            <rect class="kb-body" x="2" y="2" width="86" height="136" rx="43" />
-            <path class="kb-line" d="M45 2v46M2 48h86" />
-            <rect class="kb-accent" x="40" y="16" width="10" height="20" rx="5" />
-        </svg>
-    </div>
-</section>
-
-<ul class="trust">
-    <li><partial name="_Icon" model='"truck"' /><div><strong>Fast delivery</strong><span>Inside Dhaka 1–2 days, outside 2–4 days</span></div></li>
-    <li><partial name="_Icon" model='"shield"' /><div><strong>Cash on delivery</strong><span>Check your product, then pay</span></div></li>
-    <li><partial name="_Icon" model='"clock"' /><div><strong>Pre-order deals</strong><span>Lower prices for a limited time</span></div></li>
-</ul>
-
-@if (Model.Categories.Count > 0)
-{
-    <section class="section">
-        <div class="section-head">
-            <h2 class="section-title">Shop by category</h2>
-        </div>
-        <div class="category-tiles">
-            @foreach (var c in Model.Categories)
-            {
-                <a class="category-tile" href="/c/@c.Slug">
-                    <span class="category-icon"><partial name="_Icon" model="IconFor(c.Slug)" /></span>
-                    <strong>@c.Name</strong>
-                    @if (c.Children.Count > 0)
+                    @titleLines[i]
+                    @if (i < titleLines.Length - 1)
                     {
-                        <span>@string.Join(" · ", c.Children.Take(3).Select(x => x.Name))</span>
+                        <br />
                     }
-                </a>
-            }
-        </div>
-    </section>
-}
-
-@if (Model.Featured.Count > 0)
-{
-    <section class="section">
-        <div class="section-head">
-            <h2 class="section-title">Featured</h2>
-            <a href="/products" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
-        </div>
-        <div class="rail">
-            @foreach (var p in Model.Featured)
+                }
+            </h1>
+            @if (!string.IsNullOrWhiteSpace(hero.Text) || Model.HeroProduct is not null)
             {
-                <partial name="_ProductCard" model="p" />
+                <p>
+                    @hero.Text
+                    @if (Model.HeroProduct is { } product)
+                    {
+                        <text>From <strong>@Fmt.Money(product.Price)</strong>.</text>
+                    }
+                </p>
             }
-        </div>
-    </section>
-}
-
-@if (Model.PreOrderDeals.Count > 0)
-{
-    <section class="section deals">
-        <div class="deals-head">
-            <div>
-                <p class="eyebrow eyebrow-light"><partial name="_Icon" model='"clock"' /> Limited time</p>
-                <h2>Pre-order deals</h2>
-                <p>Order inside the offer window and get the lower price. Delivered in about two weeks.</p>
+            <div class="hero-actions">
+                <a class="btn btn-accent btn-lg" href="@heroUrl">@(hero.LinkText ?? "Shop now")</a>
+                @if (Model.HeroProduct is not null || hero.Url != "/products")
+                {
+                    <a class="btn btn-on-dark btn-lg" href="/products">All products</a>
+                }
             </div>
-            <a href="/products?avail=pre-order" class="btn btn-light">See all deals</a>
         </div>
-        <div class="rail">
-            @foreach (var p in Model.PreOrderDeals)
-            {
-                <partial name="_ProductCard" model="p" />
-            }
-        </div>
+        @if (hasSide)
+        {
+            <div class="home-side">
+                @if (hasDeals)
+                {
+                    <a class="promo-tile promo-deal" href="/products?avail=pre-order">
+                        <span class="eyebrow">Pre-order deals</span>
+                        <strong>Lower prices,<br />delivered in ~@(Model.PreOrderDeals[0].LeadTimeDays ?? 15) days</strong>
+                        <span>
+                            @if (Model.DealsEndAt is { } ends)
+                            {
+                                <text>Offer window closes in <time data-countdown="@ShopFormatter.Iso(ends)" data-short datetime="@ShopFormatter.Iso(ends)">@Fmt.Date(ends)</time> →</text>
+                            }
+                            else
+                            {
+                                <text>See all deals →</text>
+                            }
+                        </span>
+                    </a>
+                }
+                @if (Model.Promo is { } promo)
+                {
+                    <a class="promo-tile" href="@(promo.Url ?? "/products")">
+                        <span class="eyebrow">@promo.Eyebrow</span>
+                        <strong>@promo.Title</strong>
+                        <span>@(promo.LinkText ?? "Shop now") →</span>
+                    </a>
+                }
+            </div>
+        }
     </section>
-}
 
-@if (Model.InStock.Count > 0)
-{
-    <section class="section">
-        <div class="section-head">
-            <h2 class="section-title">New arrivals</h2>
-            <a href="/products?sort=newest" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
-        </div>
-        <div class="grid grid-even">
-            @foreach (var p in Model.InStock)
-            {
-                <partial name="_ProductCard" model="p" />
-            }
-        </div>
-    </section>
-}
+    @if (Model.Categories.Count > 0)
+    {
+        <section aria-labelledby="cat-title">
+            <div class="section-head"><h2 id="cat-title">Shop by category</h2></div>
+            <div class="cat-tiles">
+                @foreach (var c in Model.Categories)
+                {
+                    <a class="cat-tile" href="/c/@c.Slug">
+                        <span class="photo">
+                            @if (c.ImageUrl is not null)
+                            {
+                                <img src="@c.ImageUrl" alt="" loading="lazy" decoding="async" />
+                            }
+                            else
+                            {
+                                <partial name="_Icon" model="IconFor(c.Slug)" />
+                            }
+                        </span>
+                        <strong>@c.Name</strong>
+                    </a>
+                }
+            </div>
+        </section>
+    }
 
-@if (Model.Featured.Count == 0 && Model.InStock.Count == 0 && Model.PreOrderDeals.Count == 0)
-{
-    <div class="empty">
-        <h2>No products yet</h2>
-        <p>Sign in to the <a href="/admin">admin</a> and import a catalog CSV to get started.</p>
-    </div>
-}
+    @if (Model.Featured.Count > 0)
+    {
+        <section aria-labelledby="featured-title">
+            <div class="section-head">
+                <h2 id="featured-title">Featured</h2>
+                <a href="/products" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
+            </div>
+            <div class="grid grid-even">
+                @foreach (var p in Model.Featured)
+                {
+                    <partial name="_ProductCard" model="p" />
+                }
+            </div>
+        </section>
+    }
+
+    @if (hasDeals)
+    {
+        <section class="deals" aria-labelledby="deals-title">
+            <div class="deals-intro">
+                <p class="eyebrow">Limited time</p>
+                <h2 id="deals-title">Pre-order deals</h2>
+                <p>Order inside the offer window and pay the lower price. Delivered in about two weeks, cash on delivery.</p>
+                @if (Model.DealsEndAt is { } ends && dealsLeft is { } left && left > TimeSpan.Zero)
+                {
+                    <div class="countdown" data-countdown-boxes="@ShopFormatter.Iso(ends)" role="timer" aria-label="Offer ends @Fmt.DateTime(ends)">
+                        <span><strong data-unit="d">@left.Days.ToString("00")</strong>days</span>
+                        <span><strong data-unit="h">@left.Hours.ToString("00")</strong>hours</span>
+                        <span><strong data-unit="m">@left.Minutes.ToString("00")</strong>mins</span>
+                    </div>
+                }
+                <a href="/products?avail=pre-order" class="btn btn-accent">See all deals</a>
+            </div>
+            <div class="grid">
+                @foreach (var p in Model.PreOrderDeals)
+                {
+                    <partial name="_ProductCard" model="p" />
+                }
+            </div>
+        </section>
+    }
+
+    @if (Model.Popular.Count > 0)
+    {
+        <section aria-labelledby="popular-title">
+            <div class="section-head">
+                <h2 id="popular-title">@(Model.PopularIsRanked ? "Top selling this month" : "New arrivals")</h2>
+                <a href="/products?sort=@(Model.PopularIsRanked ? "featured" : "newest")" class="link-more">View all <partial name="_Icon" model='"chevron"' /></a>
+            </div>
+            <div class="grid grid-even">
+                @for (var i = 0; i < Model.Popular.Count; i++)
+                {
+                    <partial name="_ProductCard" model="Model.Popular[i]" view-data='new ViewDataDictionary(ViewData) { ["Rank"] = Model.PopularIsRanked ? i + 1 : null }' />
+                }
+            </div>
+        </section>
+    }
+
+    @if (Model.Featured.Count == 0 && Model.Popular.Count == 0 && !hasDeals)
+    {
+        <div class="empty">
+            <h2>No products yet</h2>
+            <p>Sign in to the <a href="/admin">admin</a> and import a catalog CSV to get started.</p>
+        </div>
+    }
+
+    <ul class="trust" aria-label="Why shop with us">
+        <li><partial name="_Icon" model='"truck"' /><div><strong>Fast delivery</strong><span>@string.Join(", ", Fmt.Shop.EffectiveDeliveryZones.Where(z => z.Days is not null).Select(z => $"{z.Name.Replace("Inside ", "")} {z.Days}"))</span></div></li>
+        <li><partial name="_Icon" model='"shield"' /><div><strong>Cash on delivery</strong><span>Check it, then pay</span></div></li>
+        <li><partial name="_Icon" model='"check"' /><div><strong>Genuine products</strong><span>From trusted importers</span></div></li>
+        @if (!string.IsNullOrWhiteSpace(Fmt.Shop.Hotline))
+        {
+            <li><partial name="_Icon" model='"phone"' /><div><strong>Hotline @Fmt.Shop.Hotline</strong><span>@(Fmt.Shop.SupportHours ?? "Call us any time")</span></div></li>
+        }
+        else
+        {
+            <li><partial name="_Icon" model='"clock"' /><div><strong>Pre-order deals</strong><span>Lower prices for a limited time</span></div></li>
+        }
+    </ul>
+</div>

@@ -7,11 +7,17 @@
     ViewData["Description"] = main.ShortDescription ?? main.Name;
     var paragraphs = (main.Description ?? "").Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries);
 
-    string? ImageFor(Product p) => string.IsNullOrWhiteSpace(p.ImageUrl) ? main.ImageUrl : p.ImageUrl;
-    var imagesDiffer = Model.Options.Select(o => ImageFor(o.Product)).Distinct().Count() > 1;
+    // An option with its own photo (e.g. another colour) gets its own gallery; the others share the main one.
+    IReadOnlyList<string> PhotosFor(Product p) => string.IsNullOrWhiteSpace(p.ImageUrl) ? main.Photos() : p.Photos();
+    var galleries = Model.Options.Select(o => (Option: o, Photos: PhotosFor(o.Product))).ToList();
+    var galleriesDiffer = galleries.Select(g => string.Join('|', g.Photos)).Distinct().Count() > 1;
     // Values per option id, for specs that differ between options (the page script swaps them).
     string? Values(SpecRow row) => row.Varies ? JsonSerializer.Serialize(Model.Options.ToDictionary(o => o.Product.Id.ToString(), o => row.ValueFor(o.Product.Id))) : null;
-    var keySpecs = Model.SpecGroups.SelectMany(g => g.Rows).Where(r => r.ShowOnCard).Take(4).ToList();
+    var rows = Model.SpecGroups.SelectMany(g => g.Rows).ToList();
+    var keySpecs = rows.Where(r => r.ShowOnCard).Take(5).ToList();
+    var warranty = rows.FirstOrDefault(r => r.Name.Equals("Warranty", StringComparison.OrdinalIgnoreCase));
+    var prices = Model.Options.Where(o => o.Product.Price is not null).Select(o => o.Product.Price!.Value).ToList();
+    var zones = Fmt.Shop.EffectiveDeliveryZones;
 }
 
 <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -21,35 +27,76 @@
         <span aria-hidden="true">/</span>
         <a href="/c/@c.Slug">@c.Name</a>
     }
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">@main.Name</span>
 </nav>
 
 <div class="product" data-product-page>
-    <div class="product-gallery">
-        @if (imagesDiffer)
-        {
-            @foreach (var o in Model.Options)
+    @foreach (var (option, photos) in galleriesDiffer ? galleries : galleries.Take(1))
+    {
+        <div class="gallery @(photos.Count > 1 ? null : "is-single")" data-gallery data-option-panel="@(galleriesDiffer ? option.Product.Id.ToString() : null)" hidden="@(galleriesDiffer && option != selected)">
+            @if (photos.Count > 1)
             {
-                <div class="product-media" data-option-panel="@o.Product.Id" hidden="@(o != selected)">
-                    <partial name="_ProductImage" model="(ImageFor(o.Product), o.Product.Name)" />
+                <div class="gallery-thumbs">
+                    @for (var i = 0; i < photos.Count; i++)
+                    {
+                        <button type="button" class="gallery-thumb" data-photo="@photos[i]" aria-label="Photo @(i + 1) of @photos.Count" aria-current="@(i == 0 ? "true" : "false")">
+                            <img src="@photos[i]" alt="" loading="lazy" decoding="async" />
+                        </button>
+                    }
                 </div>
             }
-        }
-        else
-        {
-            <div class="product-media"><partial name="_ProductImage" model="(main.ImageUrl, main.Name)" /></div>
-        }
-    </div>
+            <div class="photo gallery-main">
+                @if (photos.Count > 0)
+                {
+                    <img src="@photos[0]" alt="@option.Product.Name" data-gallery-main />
+                }
+                else
+                {
+                    <partial name="_ProductImage" model="((string?)null, main.Name)" />
+                }
+                <span class="card-tags">
+                    @if (main.IsFeatured)
+                    {
+                        <span class="tag tag-featured">Featured</span>
+                    }
+                </span>
+            </div>
+        </div>
+    }
 
     <div class="product-info">
-        @if (main.Brand is not null)
+        <div class="product-title">
+            <span class="product-meta">
+                @if (main.Brand is not null)
+                {
+                    <a href="/products?brand=@main.Brand.Slug">@main.Brand.Name</a><text> · </text>
+                }
+                SKU <span data-option-sku>@selected.Product.Sku</span>
+            </span>
+            <h1>@main.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(main.ShortDescription))
+            {
+                <p class="lead">@main.ShortDescription</p>
+            }
+        </div>
+
+        @foreach (var o in Model.Options)
         {
-            <a class="product-brand" href="/products?brand=@main.Brand.Slug">@main.Brand.Name</a>
-        }
-        <h1>@main.Name</h1>
-        <p class="muted small">SKU: <span data-option-sku>@selected.Product.Sku</span></p>
-        @if (!string.IsNullOrWhiteSpace(main.ShortDescription))
-        {
-            <p class="lead">@main.ShortDescription</p>
+            var p = o.Product;
+            var discount = ShopFormatter.DiscountPercent(p.Price, p.CompareAtPrice);
+            <div class="price-block" data-option-panel="@p.Id" hidden="@(o != selected)">
+                <span class="price-now">@Fmt.Money(p.Price)</span>
+                @if (discount is { } d)
+                {
+                    <s class="price-was">@Fmt.Money(p.CompareAtPrice)</s>
+                    <span class="tag tag-sale">Save @d%</span>
+                }
+                @if (Model.HasChoice && prices.Count > 1 && prices.Min() != prices.Max())
+                {
+                    <span class="note">Price for @o.Label · options from @Fmt.Money(prices.Min()) to @Fmt.Money(prices.Max())</span>
+                }
+            </div>
         }
 
         @if (Model.HasChoice)
@@ -59,12 +106,27 @@
                 <div class="variant-options" role="radiogroup" aria-label="Choose an option">
                     @foreach (var o in Model.Options)
                     {
+                        var p = o.Product;
                         var isSelected = o == selected;
-                        <a class="variant-option @(isSelected ? "is-selected" : null) @(o.Product.IsPurchasable ? null : "is-unavailable")"
-                           href="?v=@Uri.EscapeDataString(o.Product.Sku)" role="radio" aria-checked="@(isSelected ? "true" : "false")"
-                           data-option="@o.Product.Id" data-sku="@o.Product.Sku" data-label="@o.Label">
+                        var stock = p.Availability switch
+                        {
+                            Availability.InStock when p.StockQuantity is > 0 and <= 5 => ($"{p.StockQuantity} left", "stock-low"),
+                            Availability.InStock => ("In stock", "stock-in-stock"),
+                            Availability.PreOrder => ("Pre-order", "stock-pre-order"),
+                            _ => ("Out of stock", "stock-out-of-stock"),
+                        };
+                        <a class="variant-option @(isSelected ? "is-selected" : null) @(p.IsPurchasable ? null : "is-unavailable")"
+                           href="?v=@Uri.EscapeDataString(p.Sku)" role="radio" aria-checked="@(isSelected ? "true" : "false")"
+                           data-option="@p.Id" data-sku="@p.Sku" data-label="@o.Label">
+                            @if (!string.IsNullOrWhiteSpace(p.OptionImageUrl))
+                            {
+                                <img src="@p.OptionImageUrl" alt="" loading="lazy" />
+                            }
                             <span class="variant-name">@o.Label</span>
-                            <span class="variant-meta">@(o.Product.IsPurchasable ? Fmt.Money(o.Product.Price) : "Out of stock")</span>
+                            <span class="variant-meta">
+                                <strong>@(p.Price is null ? "—" : Fmt.Money(p.Price))</strong>
+                                <span class="@stock.Item2">@stock.Item1</span>
+                            </span>
                         </a>
                     }
                 </div>
@@ -78,6 +140,56 @@
             </div>
         }
 
+        <div class="info-box">
+            @foreach (var o in Model.Options)
+            {
+                var p = o.Product;
+                <div data-option-panel="@p.Id" hidden="@(o != selected)">
+                    @switch (p.Availability)
+                    {
+                        case Availability.InStock:
+                            <partial name="_Icon" model='"check"' />
+                            <p>
+                                <strong class="ok">In stock@(p.StockQuantity is > 0 and <= 5 ? $" · only {p.StockQuantity} left" : "")</strong>
+                                <span>Estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 1))</span>
+                            </p>
+                            break;
+                        case Availability.PreOrder:
+                            <partial name="_Icon" model='"clock"' />
+                            <p>
+                                <strong class="pre">Pre-order · delivered in about @(p.LeadTimeDays ?? 15) days</strong>
+                                <span>Order today, estimated delivery by @Fmt.Date(Fmt.DeliveryBy(p.LeadTimeDays ?? 15))</span>
+                            </p>
+                            break;
+                        default:
+                            <partial name="_Icon" model='"x"' />
+                            <p><strong class="out">Out of stock</strong><span>Check back soon. Stock is updated daily.</span></p>
+                            break;
+                    }
+                </div>
+            }
+            <div>
+                <partial name="_Icon" model='"truck"' />
+                <p>
+                    <strong>@string.Join(" · ", zones.Select(z => $"{z.Name} {Fmt.Money(z.Fee)}"))</strong>
+                    <span>@string.Join(", ", zones.Where(z => z.Days is not null).Select(z => $"{z.Days} {z.Name.ToLowerInvariant()}"))@(Fmt.Shop.FreeShippingOver is { } free ? $" · free over {Fmt.Money(free)}" : "")</span>
+                </p>
+            </div>
+            <div>
+                <partial name="_Icon" model='"shield"' />
+                <p>
+                    <strong>
+                        <span>Cash on delivery</span>
+                        @if (warranty is not null)
+                        {
+                            <span> · <span data-spec-values="@Values(warranty)">@warranty.ValueFor(selected.Product.Id)</span> warranty</span>
+                        }
+                    </strong>
+                    <span>Check the product before you pay</span>
+                </p>
+            </div>
+        </div>
+
         @if (keySpecs.Count > 0)
         {
             <ul class="key-specs">
@@ -90,49 +202,54 @@
     </div>
 </div>
 
-<div class="product-details">
-    @if (Model.SpecGroups.Count > 0)
-    {
-        <section class="specs" id="specifications">
-            <h2>Specifications</h2>
+@if (Model.SpecGroups.Count > 0)
+{
+    <section class="product-section" id="specifications" aria-labelledby="specs-title">
+        <div class="tabs-head"><h2 id="specs-title">Specifications</h2></div>
+        <div class="spec-groups">
             @foreach (var g in Model.SpecGroups)
             {
-                <table class="spec-table">
-                    <caption>@g.Name</caption>
-                    <tbody>
+                <div class="spec-group">
+                    <h3>@g.Name</h3>
+                    <dl>
                         @foreach (var row in g.Rows)
                         {
-                            <tr>
-                                <th scope="row">@row.Name</th>
-                                <td data-spec-values="@Values(row)">@row.ValueFor(selected.Product.Id)</td>
-                            </tr>
+                            <div><dt>@row.Name</dt><dd data-spec-values="@Values(row)">@row.ValueFor(selected.Product.Id)</dd></div>
                         }
-                    </tbody>
-                </table>
+                    </dl>
+                </div>
             }
-        </section>
-    }
+        </div>
+    </section>
+}
 
-    @if (paragraphs.Length > 0)
-    {
-        <section class="description">
-            <h2>Description</h2>
+@if (paragraphs.Length > 0)
+{
+    <section class="product-section" aria-labelledby="description-title">
+        <div class="tabs-head"><h2 id="description-title">Description</h2></div>
+        <div class="description">
             @foreach (var para in paragraphs)
             {
                 <p>@para</p>
             }
-        </section>
-    }
-</div>
+        </div>
+    </section>
+}
 
 @if (Model.Related.Count > 0)
 {
-    <section class="section">
-        <h2 class="section-title">You may also like</h2>
-        <div class="grid">
-            @foreach (var c in Model.Related)
+    <section class="product-section" aria-labelledby="related-title">
+        <div class="section-head"><h2 id="related-title">You might also like</h2></div>
+        <div class="mini-cards">
+            @foreach (var c in Model.Related.Take(5))
             {
-                <partial name="_ProductCard" model="c" />
+                <a class="mini-card" href="/p/@c.Slug">
+                    <span class="photo"><partial name="_ProductImage" model="(c.ImageUrl, c.Name)" /></span>
+                    <span>
+                        <span>@c.Name</span>
+                        <strong>@(c.PriceMax is { } max && max > c.Price ? $"{Fmt.Money(c.Price)}+" : Fmt.Money(c.Price))</strong>
+                    </span>
+                </a>
             }
         </div>
     </section>

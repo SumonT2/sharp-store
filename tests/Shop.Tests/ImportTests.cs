@@ -264,4 +264,55 @@ public sealed class ImportTests : IDisposable
         Assert.Equal(5, r.Failed);
         Assert.Equal(0, await _db.SupplierOffers.CountAsync());
     }
+    [Fact]
+    public async Task Catalog_import_reads_gallery_and_option_pictures()
+    {
+        var result = await ImportCatalog("""
+            sku,name,image_url,gallery,option_image
+            P1,Board,/img/a.webp,/img/b.webp | /img/a.webp |https://cdn.example.com/c.jpg,/img/red.webp
+            """);
+        Assert.Equal(0, result.Failed);
+        var p = await Product("P1");
+        Assert.Equal("/img/red.webp", p.OptionImageUrl);
+        // Main photo first, then the gallery without repeats.
+        Assert.Equal(["/img/a.webp", "/img/b.webp", "https://cdn.example.com/c.jpg"], p.Photos());
+
+        // "-" clears the gallery; an empty cell keeps it.
+        await ImportCatalog("sku,gallery,option_image\nP1,-,\n");
+        p = await Product("P1");
+        Assert.Null(p.GalleryUrls);
+        Assert.Equal("/img/red.webp", p.OptionImageUrl);
+        Assert.Equal(["/img/a.webp"], p.Photos());
+    }
+
+    [Fact]
+    public async Task Top_selling_ranks_main_products_by_recent_units_and_skips_cancelled_orders()
+    {
+        await ImportCatalog("""
+            sku,name,variant_of,variant_label
+            A,Board A,,Red
+            A-BRN,Board A Brown,A,Brown
+            B,Board B,,
+            C,Board C,,
+            """);
+        var importer = await AddSupplier("IMP", "USD", 2);
+        _db.PricingRules.Add(new PricingRule { Name = "Default", MarkupPercent = 20 });
+        await _db.SaveChangesAsync();
+        await ImportOffers("sku,cost,stock\nA,100,5\nA-BRN,100,5\nB,100,5\nC,100,5\n", importer);
+
+        var ids = await _db.Products.ToDictionaryAsync(p => p.Sku, p => p.Id);
+        void Order(OrderStatus status, DateTime at, params (string Sku, int Qty)[] lines) => _db.Orders.Add(new Order
+        {
+            Number = Guid.NewGuid().ToString("N")[..8], Status = status, CreatedAt = at,
+            Items = lines.Select(l => new OrderItem { ProductId = ids[l.Sku], Sku = l.Sku, Name = l.Sku, Quantity = l.Qty }).ToList(),
+        });
+        Order(OrderStatus.Delivered, Now.AddDays(-2), ("B", 3));
+        Order(OrderStatus.Pending, Now.AddDays(-1), ("A", 1), ("A-BRN", 3)); // options count for the main product: 4
+        Order(OrderStatus.Cancelled, Now.AddDays(-1), ("C", 10));
+        Order(OrderStatus.Delivered, Now.AddDays(-60), ("C", 10));         // too old
+        await _db.SaveChangesAsync();
+
+        var top = await new CatalogQueryService(_db).TopSellingAsync(5, Now.AddDays(-30));
+        Assert.Equal(["Board A", "Board B"], top.Select(c => c.Name));
+    }
 }

@@ -32,6 +32,8 @@ Example: `samples/csv/1-catalog.csv`
 | `short_description` | | Shown near the price. |
 | `description` | | Plain text. Use a blank line between paragraphs. |
 | `image_url` | | Link to the product photo. Only use photos you took or are allowed to use. |
+| `gallery` | `images`, `more_images` | More photos for the product page, separated by `\|`. |
+| `option_image` | `swatch` | For options: a small picture on the option button (the switch, the colour). |
 | `published` | | `yes` or `no`. New products are published by default. |
 | `featured` | | `yes` to show the product in the home page's *Featured* section. |
 | `variant_of` | | For an option of another product: the main product's SKU (see *Variants* below). `-` makes it a standalone product again. |
