@@ -111,7 +111,7 @@ const css = `*{box-sizing:border-box}body{margin:0;font-family:Inter,sans-serif}
 .key{position:absolute;border-radius:7px}
 .cap{position:absolute;left:4px;right:4px;top:2px;border-radius:6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -2px 3px rgba(0,0,0,.12);padding:4px 6px;font-weight:600;line-height:1;white-space:nowrap;overflow:hidden}
 .kb{position:relative}`;
-const studio = (inner, o = {}) => `<style>${css}</style><div class="stage" id="s" style="width:${o.w || 900}px;height:${o.h || 900}px;background:${o.bg || 'radial-gradient(120% 90% at 50% 35%,#FBFAF7 0%,#ECEAE4 70%,#E2DFD7 100%)'}">
+const studio = (inner, o = {}) => `<style>${css}</style><div class="stage" id="s" style="width:${o.w || 900}px;height:${o.h || 900}px;background:${o.bg || 'radial-gradient(120% 90% at 50% 35%,#FCFCFD 0%,#EDEFF2 70%,#E2E5EA 100%)'}">
   ${o.noFloor ? '' : `<div style="position:absolute;left:12%;right:12%;bottom:${o.floor || 22}%;height:60px;background:radial-gradient(50% 50%,rgba(0,0,0,.16),transparent 70%);filter:blur(8px)"></div>`}${inner}</div>`;
 const tilt = (html, t, scale = 1) => `<div style="transform:perspective(1800px) rotateX(${t.rx}deg) rotateZ(${t.rz}deg) scale(${scale});transform-style:preserve-3d">${html}</div>`;
 
@@ -180,8 +180,8 @@ jobs.push(['hero', `<style>${css}</style><div class="stage" id="s" style="width:
   <div style="position:absolute;right:420px;top:120px;width:520px;height:220px;background:radial-gradient(50% 50%,rgba(255,90,31,.35),transparent 70%);filter:blur(30px)"></div></div>`]);
 
 // Light hero for the light theme: the same desk scene on warm paper, without the dark backdrop.
-jobs.push(['hero-light', `<style>${css}</style><div class="stage" id="s" style="width:1680px;height:840px;background:radial-gradient(70% 90% at 70% 55%,#FFFFFF 0%,#F6F3EE 50%,#EEEAE3 100%);justify-content:flex-end">
-  <div style="position:absolute;right:-260px;top:340px;width:1000px;height:540px;border-radius:40px;background:linear-gradient(180deg,#E7E3DB,#DDD8CE);transform:perspective(1800px) rotateX(58deg) rotateZ(-10deg);box-shadow:0 30px 60px rgba(60,50,40,.12)"></div>
+jobs.push(['hero-light', `<style>${css}</style><div class="stage" id="s" style="width:1680px;height:840px;background:radial-gradient(70% 90% at 70% 55%,#FFFFFF 0%,#F4F6F9 50%,#EAEDF1 100%);justify-content:flex-end">
+  <div style="position:absolute;right:-260px;top:340px;width:1000px;height:540px;border-radius:40px;background:linear-gradient(180deg,#E3E7EC,#D8DDE3);transform:perspective(1800px) rotateX(58deg) rotateZ(-10deg);box-shadow:0 30px 60px rgba(30,40,60,.12)"></div>
   <div style="position:absolute;right:170px;top:230px">${tilt(keyboardHTML(kbs['kb-k68']), { rx: 50, rz: -12 }, 0.98)}</div>
   <div style="position:absolute;right:30px;top:440px">${mouseSVG({ ...mice['mouse-g3'], w: 180, rot: -18 })}</div></div>`]);
 

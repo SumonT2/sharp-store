@@ -3,19 +3,19 @@
 @font-face { font-family: "Space Grotesk"; src: url("../fonts/space-grotesk.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
 
 :root {
-    --bg: #f3f2ee;             /* warm paper */
+    --bg: #f4f5f7;             /* cool neutral grey */
     --surface: #ffffff;
-    --surface-2: #f0eee8;      /* chips, inputs, quiet buttons */
-    --surface-3: #e7e5de;
-    --photo: #eceae4;          /* behind product photos */
-    --text: #121316;
-    --text-2: #45474f;
-    --muted: #6b6b72;
-    --border: #e3e1da;
-    --border-strong: #d6d3ca;
+    --surface-2: #eff1f4;      /* chips, inputs, quiet buttons */
+    --surface-3: #e5e8ec;
+    --photo: #edeff2;          /* behind product photos */
+    --text: #14161a;
+    --text-2: #444851;
+    --muted: #686c75;
+    --border: #e3e6ea;
+    --border-strong: #d2d6dd;
     --ink: #2b2d33;            /* strong text on light fills */
     /* Accent: one muted colour, chosen per visitor (data-accent on <html>); every shade below is mixed from it. */
-    --accent: #e2643f;
+    --accent: #2f7fd6;
     --accent-soft: color-mix(in oklab, var(--accent) 14%, var(--surface));   /* button fills */
     --accent-soft-2: color-mix(in oklab, var(--accent) 24%, var(--surface)); /* stronger fills, hover */
     --accent-soft-3: color-mix(in oklab, var(--accent) 34%, var(--surface)); /* the main call to action */
@@ -25,14 +25,16 @@
     --primary: var(--accent-strong); /* used by the admin stylesheet */
     --primary-hover: var(--accent);
     --primary-soft: var(--accent-soft);
-    /* Bands (top bar, home banner, deals, footer): light tints in the light theme, dark in the dark theme. */
-    --band: color-mix(in oklab, var(--accent) 10%, var(--surface));
-    --band-2: var(--surface);
+    /* Bands (top bar, home banner, deals, footer): neutral and light in the light theme, dark in the dark theme.
+       Colour stays on buttons and highlights, never on large backgrounds. */
+    --band: var(--surface);
+    --band-2: #f7f8fa;
     --band-3: var(--surface);
-    --band-line: color-mix(in oklab, var(--accent) 26%, var(--surface));
+    --band-line: var(--border);
     --band-text: var(--text);
     --band-muted: var(--muted);
-    --footer: #ebe9e3;
+    --topbar: var(--surface-2);
+    --footer: #eaecf0;
     --ok: #2f7a55;
     --ok-soft: #e4f1e9;
     --pre: #9c5330;
@@ -43,8 +45,11 @@
     --radius-lg: 22px;
     --radius: 16px;
     --radius-sm: 10px;
-    --shadow: 0 1px 2px rgba(18, 19, 22, .05), 0 2px 8px rgba(18, 19, 22, .04);
-    --shadow-lg: 0 16px 40px rgba(18, 19, 22, .14);
+    --shadow: 0 1px 2px rgba(20, 30, 50, .05), 0 2px 8px rgba(20, 30, 50, .04);
+    --shadow-lg: 0 16px 40px rgba(20, 30, 50, .14);
+    /* Raised cards and panels */
+    --shadow-card: 0 1px 2px rgba(20, 30, 50, .05), 0 4px 14px rgba(20, 30, 50, .07);
+    --shadow-card-hover: 0 2px 4px rgba(20, 30, 50, .06), 0 14px 32px rgba(20, 30, 50, .13);
     --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --display: "Space Grotesk", var(--font);
     --gutter: clamp(16px, 2.6vw, 32px);
@@ -65,9 +70,10 @@
         --ink: #f1f0ec;
         --accent-soft: color-mix(in oklab, var(--accent) 18%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 28%, var(--surface)); --accent-soft-3: color-mix(in oklab, var(--accent) 38%, var(--surface));
         --accent-line: color-mix(in oklab, var(--accent) 62%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 62%, var(--text));
-        --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --footer: #131417;
+        --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --topbar: #131417; --footer: #131417;
         --ok: #6cc597; --ok-soft: #16271e; --pre: #e3a27e; --pre-soft: #33241b; --low: #e0b066; --out: #ff8f8f; --out-soft: #361818;
         --shadow: 0 1px 2px rgba(0, 0, 0, .4); --shadow-lg: 0 16px 40px rgba(0, 0, 0, .55);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .45), 0 6px 18px rgba(0, 0, 0, .3); --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 36px rgba(0, 0, 0, .45);
         color-scheme: dark;
     }
 }
@@ -77,9 +83,10 @@
     --ink: #f1f0ec;
     --accent-soft: color-mix(in oklab, var(--accent) 18%, var(--surface)); --accent-soft-2: color-mix(in oklab, var(--accent) 28%, var(--surface)); --accent-soft-3: color-mix(in oklab, var(--accent) 38%, var(--surface));
     --accent-line: color-mix(in oklab, var(--accent) 62%, var(--surface)); --accent-strong: color-mix(in oklab, var(--accent) 62%, var(--text));
-    --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --footer: #131417;
+    --band: #17181c; --band-2: #202227; --band-3: #2a2c32; --band-line: #2e3036; --band-text: #f1f0ec; --band-muted: #a9a8a2; --topbar: #131417; --footer: #131417;
     --ok: #6cc597; --ok-soft: #16271e; --pre: #e3a27e; --pre-soft: #33241b; --low: #e0b066; --out: #ff8f8f; --out-soft: #361818;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4); --shadow-lg: 0 16px 40px rgba(0, 0, 0, .55);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .45), 0 6px 18px rgba(0, 0, 0, .3); --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, .5), 0 16px 36px rgba(0, 0, 0, .45);
     color-scheme: dark;
 }
 
@@ -118,7 +125,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes fade { from { opacity: 0; } }
 
 /* ---------- Top bar, header, category bar ---------- */
-.topbar { background: var(--band); color: var(--band-muted); border-bottom: 1px solid var(--band-line); font-size: .8rem; font-weight: 600; }
+.topbar { background: var(--topbar); color: var(--band-muted); border-bottom: 1px solid var(--band-line); font-size: .8rem; font-weight: 600; }
 .topbar-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 36px; }
 .topbar-row > span { display: flex; gap: 22px; white-space: nowrap; }
 .topbar a { color: inherit; }
@@ -223,6 +230,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .stock-out-of-stock { color: var(--muted); }
 .stock-low { color: var(--low); }
 
+/* ---------- Raised surfaces ---------- */
+.card, .promo-tile, .hero, .deals, .trust li, .filters, .info-box, .spec-group, .description, .mini-card, .cart-item, .summary,
+.checkout-form fieldset, .empty, .variant-option, .countdown span, .pagination a, .pagination span, .gallery-main, .gallery-thumb,
+.subcategories .chip, .sort-form select, .qty { box-shadow: var(--shadow-card); }
+
 /* ---------- Product photos ---------- */
 .photo { position: relative; display: block; aspect-ratio: 1; border-radius: 12px; background: var(--photo); overflow: hidden; }
 .photo img { width: 100%; height: 100%; object-fit: contain; transition: transform .45s var(--ease); }
@@ -232,7 +244,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- Product grid & card ---------- */
 .grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: var(--gap); }
 .card { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; container-type: inline-size; transition: border-color .2s, box-shadow .2s; }
-.card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-lg); }
+.card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-card-hover); }
 .card:hover .photo img { transform: scale(1.05); }
 .card-tags { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
 .tag-timer { position: absolute; left: 8px; bottom: 8px; background: var(--surface); color: var(--pre); font-variant-numeric: tabular-nums; }
@@ -271,7 +283,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
 .home-side { display: grid; grid-auto-rows: minmax(0, 1fr); gap: 20px; }
 .promo-tile { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; padding: 28px 30px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border); color: var(--text); transition: transform .2s var(--ease), box-shadow .2s; }
-.promo-tile:hover { color: var(--text); transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.promo-tile:hover { color: var(--text); transform: translateY(-3px); box-shadow: var(--shadow-card-hover); }
 .promo-tile strong { font-family: var(--display); font-size: clamp(1.5rem, 1.1rem + 1vw, 1.9rem); line-height: 1.05; letter-spacing: -.03em; }
 .promo-tile > span:last-child { font-weight: 700; font-size: .875rem; }
 .promo-deal { background: var(--accent-soft); border: 2px solid var(--accent-line); }
@@ -285,7 +297,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .cat-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px; }
 .cat-tile { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--text); text-align: center; }
-.cat-tile .photo { width: 100%; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: inset 0 -6px 0 var(--surface-3); }
+.cat-tile .photo { width: 100%; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); box-shadow: inset 0 -6px 0 var(--surface-3), var(--shadow-card); }
 .cat-tile .photo img { object-fit: cover; }
 .cat-tile .photo .icon { position: absolute; inset: 0; margin: auto; width: 44px; height: 44px; stroke-width: 1.4; color: var(--text); }
 .cat-tile strong { font-size: .875rem; line-height: 1.3; }
@@ -302,7 +314,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .countdown strong { font-family: var(--display); font-size: 1.75rem; line-height: 1.1; color: var(--band-text); font-variant-numeric: tabular-nums; }
 .deals .grid { --cols: 4; gap: 16px; }
 .deals .card { background: var(--band-2); border-color: var(--band-line); }
-.deals .card:hover { border-color: var(--accent-line); box-shadow: none; }
+.deals .card:hover { border-color: var(--accent-line); box-shadow: var(--shadow-card-hover); }
 .deals .card-brand { color: var(--band-muted); }
 .deals .card-title a, .deals .price-now { color: var(--band-text); }
 .deals .card-specs li { background: var(--band-3); box-shadow: inset 0 0 0 1px var(--band-line); color: var(--band-muted); }
@@ -409,7 +421,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .variant-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .variant-option { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 10px; row-gap: 2px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 14px; background: var(--surface); color: var(--text); transition: border-color .15s, box-shadow .15s; }
 .variant-option:hover { border-color: var(--text-2); color: var(--text); }
-.variant-option.is-selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.variant-option.is-selected { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent), var(--shadow-card); }
 .variant-option img { grid-row: span 2; width: 40px; height: 40px; border-radius: 9px; object-fit: cover; background: var(--photo); }
 .variant-option.is-unavailable { border-style: dashed; }
 .variant-option.is-unavailable .variant-name { color: var(--muted); }
@@ -458,7 +470,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .description p:last-child { margin-bottom: 0; }
 .mini-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px; }
 .mini-card { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); color: var(--text); min-width: 0; transition: border-color .15s; }
-.mini-card:hover { border-color: var(--text); color: var(--text); }
+.mini-card:hover { border-color: var(--accent-line); color: var(--text); box-shadow: var(--shadow-card-hover); }
 .mini-card .photo { width: 64px; flex: none; border-radius: 10px; }
 .mini-card span { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
 .mini-card span span { font-size: .82rem; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -643,7 +655,7 @@ legend { font-family: var(--display); font-weight: 700; padding: 0 6px; }
     .cat-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .cat-tile { gap: 6px; }
     .cat-tile strong { font-size: .7rem; }
-    .cat-tile .photo { border-radius: 16px; box-shadow: inset 0 -4px 0 var(--surface-3); }
+    .cat-tile .photo { border-radius: 16px; box-shadow: inset 0 -4px 0 var(--surface-3), var(--shadow-card); }
     .deals { margin-inline: calc(var(--gutter) * -1); border-radius: 0; padding: 24px var(--gutter); }
     .deals-intro { display: flex; gap: 10px; }
     .deals .grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; margin-right: calc(var(--gutter) * -1); padding-right: var(--gutter); scrollbar-width: none; }
