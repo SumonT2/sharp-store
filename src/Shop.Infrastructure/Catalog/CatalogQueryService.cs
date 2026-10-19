@@ -202,6 +202,15 @@ public class CatalogQueryService(ShopDbContext db)
         return await ToCardsAsync(q.Take(take), ct);
     }
 
+    /// <summary>Cards for these main products in the given order (wishlist), including ones that are out of stock.</summary>
+    public async Task<IReadOnlyList<ProductCard>> CardsByIdsAsync(IReadOnlyList<int> ids, CancellationToken ct = default)
+    {
+        if (ids.Count == 0)
+            return [];
+        var cards = await ToCardsAsync(db.Products.AsNoTracking().Where(p => ids.Contains(p.Id) && p.IsPublished && p.VariantOfId == null), ct);
+        return cards.OrderBy(c => ids.ToList().IndexOf(c.Id)).ToList();
+    }
+
     /// <summary>The card for one published main product, or null.</summary>
     public async Task<ProductCard?> CardBySkuAsync(string sku, CancellationToken ct = default) =>
         (await ToCardsAsync(db.Products.AsNoTracking().Where(p => p.Sku == sku && p.IsPublished && p.VariantOfId == null && p.ListPrice != null), ct)).FirstOrDefault();

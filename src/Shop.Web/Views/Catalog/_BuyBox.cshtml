@@ -2,7 +2,11 @@
 @{
     var p = Model.Product;
     var qtyId = $"qty-{p.Id}";
+    var formId = $"add-{p.Id}";
     var isPre = p.Availability == Availability.PreOrder;
+    // The wishlist keeps main products, so every option saves its main product.
+    var wishId = p.VariantOfId ?? p.Id;
+    var wishName = p.VariantOf?.Name ?? p.Name;
 }
 <div class="buy-box">
     @if (isPre && p.OfferEndsAt is { } ends)
@@ -12,20 +16,30 @@
             <span>Pre-order price valid until <strong>@Fmt.DateTime(ends)</strong> · <time data-countdown="@ShopFormatter.Iso(ends)" datetime="@ShopFormatter.Iso(ends)"></time></span>
         </div>
     }
-    @if (p.IsPurchasable)
-    {
-        <form method="post" asp-antiforgery="true" action="/cart/add" class="add-form">
-            <input type="hidden" name="productId" value="@p.Id" />
+    @* One row: quantity, wishlist, add to cart, buy now. The cart controls belong to the (empty) form by its id, because the
+       wishlist button is a form of its own and forms can't be nested. *@
+    <div class="buy-row">
+        @if (p.IsPurchasable)
+        {
+            <form method="post" asp-antiforgery="true" action="/cart/add" id="@formId" hidden>
+                <input type="hidden" name="productId" value="@p.Id" />
+            </form>
             <label for="@qtyId" class="sr-only">Quantity</label>
             <div class="qty">
                 <button type="button" data-qty="-1" aria-label="Decrease quantity">−</button>
-                <input id="@qtyId" type="number" name="quantity" value="1" min="1" max="@Model.MaxQuantity" inputmode="numeric" />
+                <input id="@qtyId" type="number" name="quantity" value="1" min="1" max="@Model.MaxQuantity" inputmode="numeric" form="@formId" />
                 <button type="button" data-qty="1" aria-label="Increase quantity">+</button>
             </div>
-            <button type="submit" class="btn btn-primary">
+            <partial name="_WishlistButton" model='(wishId, wishName, "big")' />
+            <button type="submit" form="@formId" class="btn btn-primary">
                 <partial name="_Icon" model='"cart"' /> @(isPre ? "Pre-order" : "Add to cart")
             </button>
-            <button type="submit" name="buyNow" value="true" class="btn btn-accent">Buy now</button>
-        </form>
-    }
+            <button type="submit" form="@formId" name="buyNow" value="true" class="btn btn-accent">Buy now</button>
+        }
+        else
+        {
+            <partial name="_WishlistButton" model='(wishId, wishName, "big")' />
+            <span class="muted small">Out of stock. Save it to your wishlist and check back soon.</span>
+        }
+    </div>
 </div>

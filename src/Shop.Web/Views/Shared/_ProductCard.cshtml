@@ -49,7 +49,7 @@
             <span class="price-row">
                 @if (Model.PriceMax is { } max && max > Model.Price)
                 {
-                    <span class="price-now price-range">@Fmt.Money(Model.Price) – @Fmt.Money(max)</span>
+                    <span class="price-now price-range"><span>@Fmt.Money(Model.Price)</span> – <span>@Fmt.Money(max)</span></span>
                 }
                 else
                 {
@@ -64,16 +64,19 @@
                 @(isPre ? $"Ships in ~{Model.LeadTimeDays} days" : Fmt.AvailabilityText(Model.Availability, Model.LeadTimeDays))
             </span>
         </div>
-        @if (Model.HasVariants && Model.CanBuy)
-        {
-            <a class="round-btn" href="/p/@Model.Slug" aria-label="Choose options for @Model.Name" title="Choose options"><partial name="_Icon" model='"chevron"' /></a>
-        }
-        else if (Model.CanBuy)
-        {
-            <form method="post" asp-antiforgery="true" action="/cart/add">
-                <input type="hidden" name="productId" value="@Model.Id" />
-                <button type="submit" class="round-btn" aria-label="@(isPre ? "Pre-order" : "Add to cart"): @Model.Name" title="@(isPre ? "Pre-order" : "Add to cart")"><partial name="_Icon" model='"plus"' /></button>
-            </form>
-        }
+        <div class="card-actions">
+            <partial name="_WishlistButton" model='(Model.Id, Model.Name, "round")' />
+            @if (Model.HasVariants && Model.CanBuy)
+            {
+                <a class="round-btn" href="/p/@Model.Slug" aria-label="Choose options for @Model.Name" title="Choose options"><partial name="_Icon" model='"cart"' /></a>
+            }
+            else if (Model.CanBuy)
+            {
+                <form method="post" asp-antiforgery="true" action="/cart/add">
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <button type="submit" class="round-btn" aria-label="@(isPre ? "Pre-order" : "Add to cart"): @Model.Name" title="@(isPre ? "Pre-order" : "Add to cart")"><partial name="_Icon" model='"cart"' /></button>
+                </form>
+            }
+        </div>
     </div>
 </article>

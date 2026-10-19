@@ -1,0 +1,15 @@
+@model (int ProductId, string Name, string Size)
+@inject WishlistCookie Wishlist
+@{
+    var saved = Wishlist.Contains(Model.ProductId);
+    var label = saved ? $"Remove {Model.Name} from wishlist" : $"Save {Model.Name} to wishlist";
+}
+@* Works as a plain form; site.js turns it into an instant toggle. *@
+<form method="post" asp-antiforgery="true" action="/wishlist/toggle" class="wish-form" data-wishlist="@Model.ProductId">
+    <input type="hidden" name="productId" value="@Model.ProductId" />
+    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+    <button type="submit" class="wish-btn wish-@Model.Size @(saved ? "is-on" : null)" aria-pressed="@(saved ? "true" : "false")"
+            aria-label="@label" title="@(saved ? "Saved to wishlist" : "Save to wishlist")" data-name="@Model.Name">
+        <partial name="_Icon" model='"heart"' />
+    </button>
+</form>

@@ -1,12 +1,14 @@
 ﻿@inject CartCookie Cart
 @inject CategoryMenu Menu
 @inject OrderService Orders
+@inject WishlistCookie Wishlist
 @{
     var categories = await Menu.GetAsync();
     // The category bar lists the most specific categories (sub-categories, or a top category without any).
     var leaves = categories.SelectMany(c => c.Children.Count > 0 ? c.Children : [c]).ToList();
     var cartLines = Cart.Read();
     var cartCount = cartLines.Sum(l => l.Quantity);
+    var wishCount = Wishlist.Count;
     var cartTotal = cartCount > 0 ? (await Orders.BuildCartAsync(cartLines)).Subtotal : 0m;
     var shop = Fmt.Shop;
     var shopName = shop.Name;
@@ -82,6 +84,10 @@
                     <a class="icon-btn call-link" href="@tel" aria-label="Call @hotline"><partial name="_Icon" model='"phone"' /></a>
                 }
                 <partial name="_DisplaySettings" />
+                <a class="icon-btn wish-link @Current(path == "/wishlist")" href="/wishlist" aria-label="Wishlist, @wishCount saved" title="Wishlist">
+                    <partial name="_Icon" model='"heart"' />
+                    <span class="badge-count" data-wishlist-count hidden="@(wishCount == 0)">@wishCount</span>
+                </a>
                 <a class="cart-link" href="/cart" aria-label="Cart, @cartCount item@(cartCount == 1 ? "" : "s"), @Fmt.Money(cartTotal)">
                     <partial name="_Icon" model='"cart"' />
                     <span class="cart-text">
@@ -186,6 +192,7 @@
         <a class="@Current(path == "/")" href="/"><partial name="_Icon" model='"home"' />Home</a>
         <a class="@Current(path == "/products" && !isDeals || path.StartsWith("/c/"))" href="/products"><partial name="_Icon" model='"grid"' />Categories</a>
         <a class="@Current(isDeals)" href="/products?avail=pre-order"><partial name="_Icon" model='"clock"' />Deals</a>
+        <a class="@Current(path == "/wishlist")" href="/wishlist"><partial name="_Icon" model='"heart"' />Wishlist</a>
         <a class="@Current(path.StartsWith("/cart") || path.StartsWith("/checkout"))" href="/cart"><partial name="_Icon" model='"cart"' />Cart · @cartCount</a>
     </nav>
     <script src="~/js/site.js" asp-append-version="true"></script>

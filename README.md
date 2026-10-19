@@ -61,6 +61,12 @@ Run tests with `dotnet test`.
 
 Environment variables use `__` instead of `:`. For example, `Shop__TimeZone=Asia/Dhaka`.
 
+## Wishlist
+
+Visitors save products with the heart next to each add-to-cart button. The list is kept in a cookie in their browser
+for a year (no account needed) and shown at `/wishlist`, with a count in the header. Options of a product are saved as
+the product itself, and products that are deleted or unpublished drop off the list automatically.
+
 ## Typical workflow
 
 1. **Suppliers.** Add each supplier with its currency, default delivery days and extra costs (shipping or duty as a % plus a fixed amount per unit).

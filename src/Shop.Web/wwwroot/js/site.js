@@ -74,6 +74,42 @@
         btn.textContent = expanded ? "Show less" : btn.dataset.label;
     });
 
+    // Wishlist hearts: toggle in place (the form still works without script). Every heart for the same product on the
+    // page follows, the header count updates, and on the wishlist page a removed product disappears.
+    document.addEventListener("submit", function (e) {
+        var form = e.target;
+        if (!form.matches || !form.matches("form[data-wishlist]") || !window.fetch) return;
+        e.preventDefault();
+        var button = form.querySelector(".wish-btn");
+        if (button) button.disabled = true;
+        fetch(form.action, { method: "POST", body: new FormData(form), headers: { "X-Requested-With": "fetch" }, credentials: "same-origin" })
+            .then(function (res) { if (!res.ok) throw new Error("HTTP " + res.status); return res.json(); })
+            .then(function (data) {
+                document.querySelectorAll('form[data-wishlist="' + data.productId + '"] .wish-btn').forEach(function (b) {
+                    b.classList.toggle("is-on", data.saved);
+                    b.setAttribute("aria-pressed", String(data.saved));
+                    b.setAttribute("aria-label", (data.saved ? "Remove " : "Save ") + b.dataset.name + (data.saved ? " from wishlist" : " to wishlist"));
+                    b.title = data.saved ? "Saved to wishlist" : "Save to wishlist";
+                });
+                document.querySelectorAll("[data-wishlist-count]").forEach(function (el) {
+                    el.textContent = data.count;
+                    el.hidden = data.count === 0;
+                    var link = el.closest("a");
+                    if (link) link.setAttribute("aria-label", "Wishlist, " + data.count + " saved");
+                });
+                var page = document.querySelector("[data-wishlist-page]");
+                if (page && !data.saved) {
+                    var card = form.closest(".card");
+                    if (card) card.remove();
+                    if (!page.querySelector(".card")) { location.reload(); return; }
+                    var text = document.querySelector("[data-wishlist-count-text]");
+                    if (text) text.textContent = data.count + " saved product" + (data.count === 1 ? "" : "s");
+                }
+            })
+            .catch(function () { form.submit(); })
+            .finally(function () { if (button) button.disabled = false; });
+    });
+
     // Quantity stepper.
     document.addEventListener("click", function (e) {
         var btn = e.target.closest("[data-qty]");

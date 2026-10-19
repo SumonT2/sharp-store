@@ -1,0 +1,29 @@
+@model IReadOnlyList<ProductCard>
+@{
+    ViewData["Title"] = "Wishlist";
+}
+
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span aria-current="page">Wishlist</span></nav>
+<div class="listing-head">
+    <h1>Wishlist</h1>
+    <p class="muted" data-wishlist-count-text>@Model.Count saved product@(Model.Count == 1 ? "" : "s")</p>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="empty">
+        <h2>Nothing saved yet</h2>
+        <p>Tap the heart on any product to keep it here for later. Your wishlist is saved in this browser.</p>
+        <a class="btn btn-primary" href="/products">Browse products</a>
+    </div>
+}
+else
+{
+    <div class="grid wishlist-grid" data-wishlist-page>
+        @foreach (var p in Model)
+        {
+            <partial name="_ProductCard" model="p" />
+        }
+    </div>
+    <p class="muted small wishlist-note">Saved in this browser. Prices and stock are always current.</p>
+}

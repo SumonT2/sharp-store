@@ -261,11 +261,16 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .card-specs li { font-size: .7rem; font-weight: 650; color: var(--text-2); background: var(--surface-2); padding: 2px 8px; border-radius: 999px; }
 .card-foot { margin-top: auto; padding-top: 2px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .card-foot form { display: contents; }
+.card-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.card-actions :is(.round-btn, .wish-btn) { width: 36px; height: 36px; }
+.card-actions .icon { width: 17px; height: 17px; }
 .card-price { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .card-price .price-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .price-now { font-family: var(--display); font-weight: 700; font-size: 1.15rem; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .price-was { color: var(--muted); font-size: .8rem; }
 .price-range { white-space: nowrap; }
+.card .price-range { white-space: normal; }
+.card .price-range > span { white-space: nowrap; }
 /* Narrow cards (compact mode, phones): smaller price, the button stays round. */
 @container (max-width: 210px) {
     .card-price .price-now { font-size: 1rem; }
@@ -480,8 +485,24 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .variant-meta strong { font-family: var(--display); }
 .variant-option:not(:has(img)) { grid-template-columns: minmax(0, 1fr); }
 .buy-box { display: flex; flex-direction: column; gap: 14px; }
-.add-form { display: flex; gap: 12px; flex-wrap: wrap; }
-.add-form .btn { flex: 1; min-width: 150px; height: 52px; }
+.buy-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.buy-row > .btn { flex: 1; min-width: 150px; height: 52px; }
+
+/* Wishlist heart: a fixed warm pink, so "saved" reads the same whatever the accent colour. */
+.wish-form { display: contents; }
+.wish-btn { --love: #e0456f; width: 40px; height: 40px; flex: none; display: inline-grid; place-items: center; padding: 0; border-radius: 50%; border: 2px solid var(--btn-line); background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s, background .15s, transform .1s; }
+.wish-btn:hover { color: var(--love); border-color: color-mix(in srgb, var(--love) 35%, transparent); }
+.wish-btn:active { transform: scale(.92); }
+.wish-btn .icon { width: 18px; height: 18px; stroke-width: 2; }
+.wish-btn.is-on { color: var(--love); border-color: color-mix(in srgb, var(--love) 35%, transparent); background: color-mix(in srgb, var(--love) 10%, var(--surface)); }
+.wish-btn.is-on .icon-heart { fill: currentColor; animation: heart-pop .35s var(--ease); }
+.wish-big { width: 52px; height: 52px; }
+.wish-big .icon { width: 22px; height: 22px; }
+@keyframes heart-pop { 40% { transform: scale(1.3); } }
+.wish-link { position: relative; }
+.wish-link.is-active { color: #e0456f; }
+.badge-count { position: absolute; top: 2px; right: 2px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px; background: #e0456f; color: #fff; font-size: .65rem; font-weight: 800; line-height: 17px; text-align: center; }
+.wishlist-note { margin-top: 18px; }
 .qty { display: inline-flex; align-items: center; height: 52px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); }
 .qty button { border: 0; background: transparent; width: 44px; height: 100%; font-size: 1.25rem; cursor: pointer; color: var(--text); border-radius: 999px; }
 .qty button:hover { background: var(--surface-2); }
@@ -693,7 +714,7 @@ legend { font-family: var(--display); font-weight: 700; padding: 0 6px; }
     .catnav-row > a.is-active { background: var(--accent-soft); color: var(--accent-strong); border: 2px solid var(--accent-line); box-shadow: none; }
     .catnav-row .nav-deal { margin-left: 0; background: var(--pre-soft); color: var(--pre); border-color: transparent; }
     .mega-panel { position: fixed; left: var(--gutter); right: var(--gutter); width: auto; top: auto; margin-top: 8px; max-height: 70vh; overflow-y: auto; }
-    .appbar { position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 40; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; height: 64px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(18, 19, 22, .12); }
+    .appbar { position: fixed; left: 12px; right: 12px; bottom: 14px; z-index: 40; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; height: 64px; border-radius: 22px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(18, 19, 22, .12); }
     .appbar a { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: .7rem; font-weight: 700; color: var(--muted); }
     .appbar a.is-active { color: var(--accent-text); }
     .appbar .icon { width: 22px; height: 22px; stroke-width: 2; }
@@ -729,9 +750,9 @@ legend { font-family: var(--display); font-weight: 700; padding: 0 6px; }
     .gallery { grid-template-columns: 1fr; }
     .gallery-thumbs { order: 2; flex-direction: row; overflow-x: auto; scrollbar-width: none; }
     .gallery-thumb { flex: none; width: 64px; height: 64px; }
-    .add-form .qty { flex: none; }
-    .add-form .btn { min-width: 0; }
-    .add-form .btn-accent { flex-basis: 100%; }
+    .buy-row .qty { flex: none; }
+    .buy-row > .btn { min-width: 0; }
+    .buy-row > .btn-accent { flex-basis: 100%; }
     .variant-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .filters-head .link-btn { display: none; }
     .mini-cards { grid-template-columns: 1fr; gap: 10px; }

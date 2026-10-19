@@ -15,6 +15,7 @@ const long maxUploadBytes = 20 * 1024 * 1024;
 builder.Services.AddShopInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ShopFormatter>();
 builder.Services.AddScoped<CartCookie>();
+builder.Services.AddScoped<WishlistCookie>();
 builder.Services.AddScoped<CategoryMenu>();
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<AdminAccountService>();
