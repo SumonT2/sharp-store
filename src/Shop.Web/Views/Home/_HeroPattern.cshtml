@@ -1,0 +1,138 @@
+@model string
+@* Decorative artwork behind the home banner text, drawn here so it can use the theme's colours (--p1, --p2, --p3 set per
+   preset in site.css). Original artwork; the banner presets without a pattern render nothing. *@
+@{
+    static string F(double v) => v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}
+@switch (Model)
+{
+    case "waves":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M0 470 C 280 380 640 610 1200 400 V600 H0Z" style="fill: var(--p2)" opacity=".55" />
+            <path d="M0 530 C 360 450 760 640 1200 500 V600 H0Z" style="fill: var(--p1)" opacity=".28" />
+            <g fill="none" style="stroke: var(--p1)" stroke-width="1.6">
+                @for (var i = 0; i < 16; i++)
+                {
+                    <path d="M-20 @F(330 + i * 9) C 320 @F(190 + i * 13), 640 @F(560 - i * 9), 1220 @F(250 + i * 8)" opacity="@F(.12 + i * .025)" />
+                }
+            </g>
+        </svg>
+        break;
+
+    case "geometric":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            @foreach (var (x, y, s, o) in new[] { (930, 120, 260, .16), (1080, 330, 220, .2), (800, 420, 170, .12), (1010, -40, 150, .1), (640, 40, 110, .08), (90, 520, 160, .08), (1180, 560, 180, .14) })
+            {
+                <rect x="@F(x - s / 2.0)" y="@F(y - s / 2.0)" width="@s" height="@s" rx="10" transform="rotate(45 @x @y)" style="fill: var(--p1)" opacity="@F(o)" />
+                <rect x="@F(x - s / 2.0 + 16)" y="@F(y - s / 2.0 + 16)" width="@(s - 32)" height="@(s - 32)" rx="8" transform="rotate(45 @x @y)" fill="none" stroke="#fff" stroke-width="2" opacity=".55" />
+            }
+        </svg>
+        break;
+
+    case "streaks":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+                <linearGradient id="hp-s1" x1="0" x2="1"><stop offset="0" style="stop-color: var(--p1)" stop-opacity="0" /><stop offset="1" style="stop-color: var(--p1)" /></linearGradient>
+                <linearGradient id="hp-s2" x1="0" x2="1"><stop offset="0" style="stop-color: var(--p2)" stop-opacity="0" /><stop offset="1" style="stop-color: var(--p2)" /></linearGradient>
+            </defs>
+            <g transform="rotate(-32 600 300)" stroke-linecap="round">
+                @foreach (var (x, y, w, h, g, o) in new[] { (520, 40, 520, 10, 1, .9), (600, 110, 380, 6, 2, .7), (420, 200, 640, 14, 1, .75), (700, 290, 420, 5, 2, .6), (560, 360, 560, 9, 1, .5), (760, 440, 300, 4, 2, .55), (380, 520, 520, 7, 2, .35), (820, -40, 300, 5, 2, .5) })
+                {
+                    <rect x="@x" y="@y" width="@w" height="@h" rx="@F(h / 2.0)" fill="url(#hp-s@(g))" opacity="@F(o)" />
+                }
+            </g>
+        </svg>
+        break;
+
+    case "network":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+                <radialGradient id="hp-n" cx="85%" cy="85%" r="55%"><stop offset="0" style="stop-color: var(--p2)" stop-opacity=".55" /><stop offset="1" style="stop-color: var(--p2)" stop-opacity="0" /></radialGradient>
+            </defs>
+            <rect width="1200" height="600" fill="url(#hp-n)" />
+            <g fill="none" style="stroke: var(--p1)" stroke-width="1.4">
+                @for (var row = 0; row < 8; row++)
+                {
+                    for (var col = 0; col < 9; col++)
+                    {
+                        var cx = 640 + col * 78 + (row % 2) * 39;
+                        var cy = -20 + row * 68;
+                        var fade = Math.Clamp((cx - 600) / 600.0, 0, 1);
+                        if (fade < .15) continue;
+                        var pts = string.Join(" ", Enumerable.Range(0, 6).Select(k => $"{F(cx + 44 * Math.Cos(Math.PI / 3 * k + Math.PI / 6))},{F(cy + 44 * Math.Sin(Math.PI / 3 * k + Math.PI / 6))}"));
+                        <polygon points="@pts" opacity="@F(fade * .55)" />
+                    }
+                }
+            </g>
+            <g style="fill: var(--p1)">
+                @foreach (var (x, y, r) in new[] { (884, 116, 4), (1040, 184, 5), (962, 320, 4), (1118, 388, 6), (806, 388, 3), (1040, 456, 4), (1157, 116, 3) })
+                {
+                    <circle cx="@x" cy="@y" r="@r" />
+                    <circle cx="@x" cy="@y" r="@(r * 4)" opacity=".15" />
+                }
+            </g>
+        </svg>
+        break;
+
+    case "swoosh":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M1200 0 H860 C 1000 120 1060 300 1200 360Z" style="fill: var(--p2)" />
+            <path d="M1200 0 H960 C 1060 110 1110 220 1200 250Z" style="fill: var(--p1)" />
+            <path d="M0 600 H330 C 210 520 120 420 0 400Z" style="fill: var(--p2)" />
+            <path d="M0 600 H210 C 130 550 60 500 0 490Z" style="fill: var(--p1)" />
+            <g style="fill: var(--p1)" opacity=".35">
+                @for (var r = 0; r < 4; r++)
+                {
+                    for (var c = 0; c < 6; c++)
+                    {
+                        <circle cx="@(1050 + c * 18)" cy="@(470 + r * 18)" r="3" />
+                    }
+                }
+            </g>
+        </svg>
+        break;
+
+    case "halftone":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M760 0 H1200 V600 H1040 Z" style="fill: var(--p1)" />
+            <g style="fill: var(--p2)">
+                @for (var ring = 0; ring < 6; ring++)
+                {
+                    var radius = 230 + ring * 16;
+                    var count = 60 + ring * 6;
+                    for (var k = 0; k < count; k++)
+                    {
+                        var a = Math.PI * 2 * k / count;
+                        <circle cx="@F(940 + radius * Math.Cos(a))" cy="@F(330 + radius * Math.Sin(a))" r="@F(4.2 - ring * .6)" />
+                    }
+                }
+            </g>
+            <circle cx="940" cy="330" r="215" style="fill: var(--p1)" />
+            <circle cx="940" cy="330" r="215" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="8" />
+        </svg>
+        break;
+
+    case "watercolor":
+        <svg class="hero-pattern" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+                <filter id="hp-w" x="-20%" y="-20%" width="140%" height="140%">
+                    <feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="4" seed="7" />
+                    <feDisplacementMap in="SourceGraphic" scale="90" />
+                    <feGaussianBlur stdDeviation="10" />
+                </filter>
+            </defs>
+            <g filter="url(#hp-w)">
+                <path d="M-60 -60 H760 C 640 60 420 120 260 200 C 120 270 40 250 -60 300Z" style="fill: var(--p1)" opacity=".55" />
+                <path d="M-60 -60 H520 C 420 30 260 80 120 130 C 40 160 0 170 -60 180Z" style="fill: var(--p1)" opacity=".5" />
+                <path d="M1260 660 H420 C 560 560 760 480 940 420 C 1080 370 1160 330 1260 250Z" style="fill: var(--p2)" opacity=".5" />
+                <path d="M1260 660 H700 C 820 590 980 540 1100 500 C 1180 470 1220 450 1260 420Z" style="fill: var(--p2)" opacity=".55" />
+            </g>
+            <g opacity=".6">
+                @foreach (var (x, y, r, p) in new[] { (180, 250, 4, 1), (620, 150, 3, 1), (700, 90, 5, 1), (1080, 270, 4, 2), (860, 360, 3, 2), (990, 330, 6, 2), (420, 210, 2, 1), (1130, 380, 3, 2) })
+                {
+                    <circle cx="@x" cy="@y" r="@r" style="fill: var(--p@(p))" />
+                }
+            </g>
+        </svg>
+        break;
+}

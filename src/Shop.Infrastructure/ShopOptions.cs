@@ -43,8 +43,7 @@ public class ShopOptions
         Eyebrow = "Fresh stock every week",
         Title = "Type faster.\nAim sharper.",
         Text = "Mechanical keyboards, gaming mice and desk gear. Compare every switch, layout and sensor, then pay cash on delivery.",
-        ImageUrl = "/img/demo/hero-light.webp",
-        DarkImageUrl = "/img/demo/hero.webp",
+        ImageUrl = "/img/demo/hero-cutout.webp",
         Url = "/products",
         LinkText = "Shop all products",
     };
@@ -70,9 +69,15 @@ public class HomeBanner
     /// <summary>Headline; a line break ("\n") starts a new line.</summary>
     public string Title { get; set; } = "";
     public string? Text { get; set; }
-    /// <summary>Wide picture (about 2:1) with its subject on the right, so the text on the left stays readable.</summary>
+    /// <summary>
+    /// Background preset: accent, sky, mint, peach, lavender, aurora, sunset, midnight, or photo.
+    /// With a preset the picture is shown on the right (use a cut-out with a transparent background);
+    /// with "photo" the picture fills the whole banner.
+    /// </summary>
+    public string Background { get; set; } = "accent";
+    /// <summary>The banner picture: a transparent cut-out for presets, or a wide photo (about 2:1, subject on the right) for "photo".</summary>
     public string? ImageUrl { get; set; }
-    /// <summary>Optional darker picture used with the dark theme; the normal one is used when empty.</summary>
+    /// <summary>For "photo" only: a darker picture used with the dark theme.</summary>
     public string? DarkImageUrl { get; set; }
     public string? Url { get; set; }
     public string? LinkText { get; set; }

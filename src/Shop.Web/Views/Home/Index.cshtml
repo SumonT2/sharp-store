@@ -1,4 +1,5 @@
 ﻿@model HomeViewModel
+@inject IWebHostEnvironment Env
 @{
     ViewData["Title"] = "";
     ViewData["Description"] = $"{Fmt.Shop.Name}: mechanical keyboards, mice and accessories in Bangladesh with detailed specifications and cash on delivery.";
@@ -10,9 +11,18 @@
     var hasSide = hasDeals || Model.Promo is not null;
     var dealsLeft = Model.DealsEndAt is { } end ? end - Fmt.Clock.UtcNow : (TimeSpan?)null;
 
-    // The stylesheet picks the light or the dark picture to match the theme.
+    // While developing, ?hero-bg=waves previews another banner background without changing the settings.
+    var previewBackground = Env.IsDevelopment() ? Context.Request.Query["hero-bg"].ToString() : "";
+    var background = HeroBackgrounds.Find(string.IsNullOrEmpty(previewBackground) ? hero.Background : previewBackground);
+    var isPhoto = background.Key == HeroBackgrounds.Photo;
+    var heroClass = isPhoto ? "hero hero-photo"
+        : $"hero hero-bg hero-bg-{background.Key}{(background.OnColor ? " hero-on-color" : "")}{(background.OnLight ? " hero-on-light" : "")}";
+
+    // Photo banners: the stylesheet picks the light or the dark picture to match the theme.
     string? HeroImages()
     {
+        if (!isPhoto)
+            return null;
         var css = new List<string>();
         if (!string.IsNullOrWhiteSpace(hero.ImageUrl)) css.Add($"--hero-light: url('{hero.ImageUrl}')");
         if (!string.IsNullOrWhiteSpace(hero.DarkImageUrl)) css.Add($"--hero-dark: url('{hero.DarkImageUrl}')");
@@ -30,7 +40,15 @@
 
 <div class="home">
     <section class="home-top @(hasSide ? null : "is-single")" aria-label="Promotions">
-        <div class="hero" style="@HeroImages()">
+        <div class="@heroClass" style="@HeroImages()">
+            @if (!isPhoto)
+            {
+                <partial name="_HeroPattern" model="background.Key" />
+            }
+            @if (!isPhoto && !string.IsNullOrWhiteSpace(hero.ImageUrl))
+            {
+                <img class="hero-art" src="@hero.ImageUrl" alt="" fetchpriority="high" />
+            }
             @if (!string.IsNullOrWhiteSpace(hero.Eyebrow))
             {
                 <p class="eyebrow">@hero.Eyebrow</p>

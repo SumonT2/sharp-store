@@ -185,14 +185,19 @@ jobs.push(['hero-light', `<style>${css}</style><div class="stage" id="s" style="
   <div style="position:absolute;right:170px;top:230px">${tilt(keyboardHTML(kbs['kb-k68']), { rx: 50, rz: -12 }, 0.98)}</div>
   <div style="position:absolute;right:30px;top:440px">${mouseSVG({ ...mice['mouse-g3'], w: 180, rot: -18 })}</div></div>`]);
 
+// Cut-out of the banner products on a transparent background, for coloured banner backgrounds.
+jobs.push(['hero-cutout', `<style>${css}</style><div class="stage" id="s" style="width:1100px;height:640px;background:transparent">
+  <div style="position:absolute;left:44px;top:150px">${tilt(keyboardHTML(kbs['kb-k68']), { rx: 50, rz: -12 }, 0.97)}</div>
+  <div style="position:absolute;right:40px;top:300px">${mouseSVG({ ...mice['mouse-g3'], w: 190, rot: -18 })}</div></div>`]);
+
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1700, height: 1000 } });
   for (const [name, html] of jobs) {
     await page.setContent(`<!doctype html><html><body>${html}</body></html>`);
     const png = `${OUT}/${name}.png`;
-    await page.locator('#s').screenshot({ path: png });
-    const size = name.startsWith('hero') ? '1680x840' : '800x800';
+    await page.locator('#s').screenshot({ path: png, omitBackground: name.endsWith('-cutout') });
+    const size = name.endsWith('-cutout') ? '1100x' : name.startsWith('hero') ? '1680x840' : '800x800';
     execFileSync('convert', [png, '-resize', size, '-quality', '80', `${OUT}/${name}.webp`]);
     fs.unlinkSync(png);
   }
